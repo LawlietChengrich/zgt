@@ -35,7 +35,8 @@ extern "C" {
 extern CAN_HandleTypeDef hcan2;
 
 /* USER CODE BEGIN Private defines */
-
+#define MAX_CAN_RECV_LEN  (8)
+#define CERTER_CPU_CAN_ID (0x1314)
 /* USER CODE END Private defines */
 
 void MX_CAN2_Init(void);

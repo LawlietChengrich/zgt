@@ -13,3 +13,4 @@
 /MDK-ARM/*.lst
 /MDK-ARM/stm32_zg_test.uvguix.rs0845
 /MDK-ARM/stm32_zg_test.uvoptx
+/MDK-ARM/*.log

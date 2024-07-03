@@ -159,7 +159,7 @@ void dh_usart1_recv_process(void)
 #if 1
 		if(dh_uart1.data_recv[0] == 0xff && dh_uart1.data_recv[3] == 0x80)
 		{
-      dh_can2_data_send(0x1314, dh_uart1.data_recv, 4);
+      dh_can2_data_send(CERTER_CPU_CAN_ID, dh_uart1.data_recv, 4);
 #if 0
 			switch (dh_uart1.data_recv[1])
 			{
