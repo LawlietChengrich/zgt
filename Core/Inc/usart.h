@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    can.h
+  * @file    usart.h
   * @brief   This file contains all the function prototypes for
-  *          the can.c file
+  *          the usart.c file
   ******************************************************************************
   * @attention
   *
@@ -18,8 +18,8 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __CAN_H__
-#define __CAN_H__
+#ifndef __USART_H__
+#define __USART_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,21 +32,30 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern CAN_HandleTypeDef hcan2;
+extern UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN Private defines */
+#define UART_BUF_MAX_LEN  128
+
+
+typedef struct 
+{
+  /* data */
+  uint8_t data_recv[UART_BUF_MAX_LEN];
+  uint16_t data_recv_len;
+}dh_uart_t;
 
 /* USER CODE END Private defines */
 
-void MX_CAN2_Init(void);
+void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-extern void dh_can2_data_send(uint32_t msgid, uint8_t *data, uint8_t data_len);
+extern void dh_usart1_recv_process(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __CAN_H__ */
+#endif /* __USART_H__ */
 

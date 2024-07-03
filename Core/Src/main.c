@@ -19,6 +19,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "can.h"
+#include "dma.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -47,7 +49,6 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -85,9 +86,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_CAN2_Init();
-
-  /* Initialize interrupts */
-  MX_NVIC_Init();
+  MX_DMA_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
 	SysTick_Config(SystemCoreClock / 1000000);//SysTick_Handler 1us 
@@ -97,7 +97,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
 		//LL_mDelay(500);
     /* USER CODE END WHILE */
 
@@ -151,17 +150,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief NVIC Configuration.
-  * @retval None
-  */
-static void MX_NVIC_Init(void)
-{
-  /* CAN2_RX1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(CAN2_RX1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(CAN2_RX1_IRQn);
 }
 
 /* USER CODE BEGIN 4 */

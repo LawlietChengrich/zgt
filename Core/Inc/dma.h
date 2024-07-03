@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    can.h
+  * @file    dma.h
   * @brief   This file contains all the function prototypes for
-  *          the can.c file
+  *          the dma.c file
   ******************************************************************************
   * @attention
   *
@@ -18,8 +18,8 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __CAN_H__
-#define __CAN_H__
+#ifndef __DMA_H__
+#define __DMA_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,25 +28,25 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
+/* DMA memory to memory transfer handles -------------------------------------*/
+
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
-
-extern CAN_HandleTypeDef hcan2;
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-void MX_CAN2_Init(void);
+void MX_DMA_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-extern void dh_can2_data_send(uint32_t msgid, uint8_t *data, uint8_t data_len);
+
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __CAN_H__ */
+#endif /* __DMA_H__ */
 

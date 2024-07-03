@@ -21,6 +21,7 @@
 #include "can.h"
 
 /* USER CODE BEGIN 0 */
+#include "usart.h"
 HAL_StatusTypeDef CAN_SetFilters(void);
 
 uint8_t can2_recv_data[8] = {0};
@@ -88,6 +89,9 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef* canHandle)
     GPIO_InitStruct.Alternate = GPIO_AF9_CAN2;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+    /* CAN2 interrupt Init */
+    HAL_NVIC_SetPriority(CAN2_RX1_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(CAN2_RX1_IRQn);
   /* USER CODE BEGIN CAN2_MspInit 1 */
 
   /* USER CODE END CAN2_MspInit 1 */
@@ -129,7 +133,7 @@ HAL_StatusTypeDef CAN_SetFilters(void)
     canFilter.FilterBank = 0;		                    //筛选器组编号
     canFilter.FilterMode = CAN_FILTERMODE_IDMASK;	    //ID掩码模式
     canFilter.FilterScale = CAN_FILTERSCALE_32BIT;	    //32位长度
-  #if 1
+  #if 0
     //设置1：接收所有帧
       canFilter.FilterIdHigh = 0x0000;		            //CAN_FxR1 的高16位
     	canFilter.FilterIdLow = 0x0000;			            //CAN_FxR1 的低16位
@@ -145,10 +149,10 @@ HAL_StatusTypeDef CAN_SetFilters(void)
       canFilter.FilterMaskIdLow = 0xFFFF;		            //CAN_FxR2的低16位，所有位任意
 #endif
     //设置2：只接收stdID为奇数的帧
-    //canFilter.FilterIdHigh = 0x0020;		            //CAN_FxR1 的高16位
-   //canFilter.FilterIdLow = 0x0000;			            //CAN_FxR1 的低16位
-    //canFilter.FilterMaskIdHigh = 0x0020;	            //CAN_FxR2的高16位
-    //canFilter.FilterMaskIdLow = 0x0000;		            //CAN_FxR2的低16位
+    canFilter.FilterIdHigh = 0x000;		            //CAN_FxR1 的高16位
+   canFilter.FilterIdLow = 0x000C;			            //CAN_FxR1 的低16位
+    canFilter.FilterMaskIdHigh = 0x0000;	            //CAN_FxR2的高16位
+    canFilter.FilterMaskIdLow = 0x000C;		            //CAN_FxR2的低16位
     
     canFilter.FilterFIFOAssignment = CAN_RX_FIFO1;		//应用于FIFO0
     canFilter.FilterActivation = ENABLE;		        //使用筛选器
@@ -169,20 +173,21 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
   {
     if(HAL_CAN_GetRxFifoFillLevel(&hcan2, CAN_RX_FIFO1))
     {
-      HAL_CAN_GetRxMessage(&hcan2, CAN_RX_FIFO1, &RxMessage, can2_recv_data);
+		HAL_CAN_GetRxMessage(&hcan2, CAN_RX_FIFO1, &RxMessage, can2_recv_data);
+		HAL_UART_Transmit(&huart1, can2_recv_data, RxMessage.DLC, 1);
     }
   }
 }
 
 
-void CAN2_Send_Test(uint32_t msgid, uint8_t *data)
+void dh_can2_data_send(uint32_t msgid, uint8_t *data, uint8_t data_len)
 {
     CAN_TxHeaderTypeDef TxMessage;
     uint32_t TxMailbox;
     TxMessage.IDE = CAN_ID_STD;                         //设置ID类型
     TxMessage.StdId = msgid;                            //设置ID号
     TxMessage.RTR = CAN_RTR_DATA;                       //设置传送数据帧
-    TxMessage.DLC = 4;                                  //设置数据长度
+    TxMessage.DLC = data_len;                                  //设置数据长度
 
     if(HAL_CAN_AddTxMessage(&hcan2, &TxMessage, data, &TxMailbox) != HAL_OK) 
     {
