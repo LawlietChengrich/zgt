@@ -146,12 +146,13 @@ HAL_StatusTypeDef CAN_SetFilters(void)
       canFilter.FilterMaskIdHigh = 0xFFFF;	            //CAN_FxR2的高16位。所有位任意
       canFilter.FilterMaskIdLow = 0xFFFF;		            //CAN_FxR2的低16位，所有位任意
 #endif
+#if 0
     //设置2：确保CAN_FxR2的低16位与CAN_FxR1 的低16位的 3 位都是1，即可确保是只接受奇数ID
     canFilter.FilterIdHigh = 0x0000;		            //CAN_FxR1 的高16位
     canFilter.FilterIdLow = (((uint32_t)0x1<<3)|CAN_ID_EXT|CAN_RTR_DATA)&0xFFFF;//CAN_FxR1 的低16位
     canFilter.FilterMaskIdHigh = 0x0000;	            //CAN_FxR2的高16位
     canFilter.FilterMaskIdLow = (((uint32_t)0x1<<3)|CAN_ID_EXT|CAN_RTR_DATA)&0xFFFF;//CAN_FxR2的低16位
-    
+#endif   
     canFilter.FilterFIFOAssignment = CAN_RX_FIFO1;		//应用于FIFO0
     canFilter.FilterActivation = ENABLE;		        //使用筛选器
     //canFilter.SlaveStartFilterBank = 14;		        //从CAN控制器筛选器起始的Bank
