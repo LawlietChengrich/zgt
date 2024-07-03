@@ -35,13 +35,14 @@ extern "C" {
 extern CAN_HandleTypeDef hcan2;
 
 /* USER CODE BEGIN Private defines */
-
+#define DEVICE_CAN_ID (0x1315)
+#define CERTER_CPU_CAN_ID (0x1314)
 /* USER CODE END Private defines */
 
 void MX_CAN2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+extern void dh_can2_data_send(uint32_t msgid, uint8_t *data, uint8_t data_len);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

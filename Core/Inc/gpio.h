@@ -33,7 +33,7 @@ extern "C" {
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN Private defines */
-#define GPIO_PLUSE_CTL_NUM  2
+#define GPIO_PLUSE_CTL_NUM  3
 /* USER CODE END Private defines */
 
 void MX_GPIO_Init(void);

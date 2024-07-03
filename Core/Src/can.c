@@ -21,6 +21,8 @@
 #include "can.h"
 
 /* USER CODE BEGIN 0 */
+#include "gpio.h"
+
 HAL_StatusTypeDef CAN_SetFilters(void);
 
 uint8_t can2_recv_data[8] = {0};
@@ -129,26 +131,26 @@ HAL_StatusTypeDef CAN_SetFilters(void)
     canFilter.FilterBank = 0;		                    //筛选器组编号
     canFilter.FilterMode = CAN_FILTERMODE_IDMASK;	    //ID掩码模式
     canFilter.FilterScale = CAN_FILTERSCALE_32BIT;	    //32位长度
-  #if 1
+  #if 0
     //设置1：接收所有帧
       canFilter.FilterIdHigh = 0x0000;		            //CAN_FxR1 的高16位
     	canFilter.FilterIdLow = 0x0000;			            //CAN_FxR1 的低16位
     	canFilter.FilterMaskIdHigh = 0x0000;	            //CAN_FxR2的高16位。所有位任意
     	canFilter.FilterMaskIdLow = 0x0000;		            //CAN_FxR2的低16位，所有位任意
   #endif
-#if 0
-      canFilter.FilterIdHigh = ((((uint32_t)0x1314<<3)|
+#if 1
+      canFilter.FilterIdHigh = ((((uint32_t)CERTER_CPU_CAN_ID<<3)|
 										 CAN_ID_EXT|CAN_RTR_DATA)&0xFFFF0000)>>16;		//要筛选的ID高位 	            //CAN_FxR1 的高16位
-      canFilter.FilterIdLow = (((uint32_t)0x1314<<3)|
+      canFilter.FilterIdLow = (((uint32_t)CERTER_CPU_CAN_ID<<3)|
 									     CAN_ID_EXT|CAN_RTR_DATA)&0xFFFF; //要筛选的ID低位 
       canFilter.FilterMaskIdHigh = 0xFFFF;	            //CAN_FxR2的高16位。所有位任意
       canFilter.FilterMaskIdLow = 0xFFFF;		            //CAN_FxR2的低16位，所有位任意
 #endif
-    //设置2：只接收stdID为奇数的帧
-    //canFilter.FilterIdHigh = 0x0020;		            //CAN_FxR1 的高16位
-   //canFilter.FilterIdLow = 0x0000;			            //CAN_FxR1 的低16位
-    //canFilter.FilterMaskIdHigh = 0x0020;	            //CAN_FxR2的高16位
-    //canFilter.FilterMaskIdLow = 0x0000;		            //CAN_FxR2的低16位
+    //设置2：确保CAN_FxR2的低16位与CAN_FxR1 的低16位的 3 位都是1，即可确保是只接受奇数ID
+    canFilter.FilterIdHigh = 0x0000;		            //CAN_FxR1 的高16位
+    canFilter.FilterIdLow = (((uint32_t)0x1<<3)|CAN_ID_EXT|CAN_RTR_DATA)&0xFFFF;//CAN_FxR1 的低16位
+    canFilter.FilterMaskIdHigh = 0x0000;	            //CAN_FxR2的高16位
+    canFilter.FilterMaskIdLow = (((uint32_t)0x1<<3)|CAN_ID_EXT|CAN_RTR_DATA)&0xFFFF;//CAN_FxR2的低16位
     
     canFilter.FilterFIFOAssignment = CAN_RX_FIFO1;		//应用于FIFO0
     canFilter.FilterActivation = ENABLE;		        //使用筛选器
@@ -170,19 +172,34 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
     if(HAL_CAN_GetRxFifoFillLevel(&hcan2, CAN_RX_FIFO1))
     {
       HAL_CAN_GetRxMessage(&hcan2, CAN_RX_FIFO1, &RxMessage, can2_recv_data);
+      if(can2_recv_data[0] == 0xFF && can2_recv_data[3] == 0x80)
+      {
+        switch (can2_recv_data[1])
+        {
+          case 0:
+          case 1:
+          case 2:dh_gpio_1pluse(1000, can2_recv_data[1]);
+                dh_can2_data_send(DEVICE_CAN_ID, can2_recv_data, RxMessage.DLC);
+                break;
+          
+          default:
+            break;
+        }
+      }
     }
   }
 }
 
 
-void CAN2_Send_Test(uint32_t msgid, uint8_t *data)
+void dh_can2_data_send(uint32_t msgid, uint8_t *data, uint8_t data_len)
 {
     CAN_TxHeaderTypeDef TxMessage;
     uint32_t TxMailbox;
-    TxMessage.IDE = CAN_ID_STD;                         //设置ID类型
-    TxMessage.StdId = msgid;                            //设置ID号
+    TxMessage.IDE = CAN_ID_EXT;                         //设置ID类型
+    //TxMessage.StdId = msgid;                            //设置ID号
+    TxMessage.ExtId = msgid;
     TxMessage.RTR = CAN_RTR_DATA;                       //设置传送数据帧
-    TxMessage.DLC = 4;                                  //设置数据长度
+    TxMessage.DLC = data_len;                                  //设置数据长度
 
     if(HAL_CAN_AddTxMessage(&hcan2, &TxMessage, data, &TxMailbox) != HAL_OK) 
     {
