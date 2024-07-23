@@ -22,6 +22,7 @@
 
 /* USER CODE BEGIN 0 */
 #include "can.h"
+#include "gpio.h"
 dh_uart_t dh_uart1;
 /* USER CODE END 0 */
 
@@ -159,6 +160,14 @@ void dh_usart1_recv_process(void)
 #if 1
 		if(dh_uart1.data_recv[0] == 0xff && dh_uart1.data_recv[3] == 0x80)
 		{
+      if(dh_uart1.data_recv[1] < GPIO_PLUSE_CTL_NUM)
+      {
+        dh_gpio_1pluse(150, dh_uart1.data_recv[1]);
+      }
+      else
+      {
+        dh_gpio_set_level(dh_uart1.data_recv[1]-9, dh_uart1.data_recv[2]);
+      }
       dh_can2_data_send(CERTER_CPU_CAN_ID, dh_uart1.data_recv, 4);
 #if 0
 			switch (dh_uart1.data_recv[1])

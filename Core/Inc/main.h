@@ -67,6 +67,28 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define MPPT_VCHG_GEAR1_M_Pin LL_GPIO_PIN_5
+#define MPPT_VCHG_GEAR1_M_GPIO_Port GPIOE
+#define MPPT_VCHG_GEAR2_M_Pin LL_GPIO_PIN_6
+#define MPPT_VCHG_GEAR2_M_GPIO_Port GPIOE
+#define MPPT1_ON_Pin LL_GPIO_PIN_0
+#define MPPT1_ON_GPIO_Port GPIOF
+#define MPPT2_ON_Pin LL_GPIO_PIN_1
+#define MPPT2_ON_GPIO_Port GPIOF
+#define MPPT3_ON_Pin LL_GPIO_PIN_2
+#define MPPT3_ON_GPIO_Port GPIOF
+#define MPPT4_ON_Pin LL_GPIO_PIN_3
+#define MPPT4_ON_GPIO_Port GPIOF
+#define MPPT5_ON_Pin LL_GPIO_PIN_4
+#define MPPT5_ON_GPIO_Port GPIOF
+#define MPPT6_ON_Pin LL_GPIO_PIN_5
+#define MPPT6_ON_GPIO_Port GPIOF
+#define MPPT7_ON_Pin LL_GPIO_PIN_6
+#define MPPT7_ON_GPIO_Port GPIOF
+#define MPPT8_ON_Pin LL_GPIO_PIN_7
+#define MPPT8_ON_GPIO_Port GPIOF
+#define MPPT9_ON_Pin LL_GPIO_PIN_8
+#define MPPT9_ON_GPIO_Port GPIOF
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

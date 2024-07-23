@@ -189,8 +189,6 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-	dh_gpio_delay_process();
-
 
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
