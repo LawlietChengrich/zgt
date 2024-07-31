@@ -22,10 +22,12 @@
 
 /* USER CODE BEGIN 0 */
 #include "gpio.h"
+#include "can_app.h"
 
-HAL_StatusTypeDef CAN_SetFilters(void);
+HAL_StatusTypeDef CAN_SetFilters(uint8_t can_num);
+void dh_set_canid(uint32_t* canid, dh_can_id_position_t position, uint32_t position_data, uint8_t position_data_bit_cnt);
 
-uint8_t can2_recv_data[8] = {0};
+uint8_t can2_recv_data[MAX_CAN_RECV_LEN] = {0};
 /* USER CODE END 0 */
 
 CAN_HandleTypeDef hcan2;
@@ -58,7 +60,7 @@ void MX_CAN2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN CAN2_Init 2 */
-  CAN_SetFilters();
+  CAN_SetFilters(1);
   HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO1_MSG_PENDING);
   HAL_CAN_Start(&hcan2);
   /* USER CODE END CAN2_Init 2 */
@@ -123,22 +125,33 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
 }
 
 /* USER CODE BEGIN 1 */
-HAL_StatusTypeDef CAN_SetFilters(void)
+
+void Can_Mask_Value_set(CAN_FilterTypeDef* canFilter, uint32_t canid_std, uint32_t mask_id)
 {
-	HAL_StatusTypeDef result;
-    CAN_FilterTypeDef	canFilter;                      //筛选器结构体变量
-     // Configure the CAN Filter
-    canFilter.FilterBank = 0;		                    //筛选器组编号
-    canFilter.FilterMode = CAN_FILTERMODE_IDMASK;	    //ID掩码模式
-    canFilter.FilterScale = CAN_FILTERSCALE_32BIT;	    //32位长度
-  #if 0
+  (*canFilter).FilterIdHigh = canid_std>>16;		            //CAN_FxR1 high 16 bit
+  (*canFilter).FilterIdLow = canid_std&0xFFFF;//CAN_FxR1 low 16 bit
+  (*canFilter).FilterMaskIdHigh = mask_id>>16;	            //CAN_FxR2 high 16 bit
+  (*canFilter).FilterMaskIdLow = mask_id&0xFFFF;//CAN_FxR2 low 16 bit
+}
+
+HAL_StatusTypeDef CAN_SetFilters(uint8_t can_num)
+{
+  uint32_t canid_std = 0, mask_id = 0;
+  HAL_StatusTypeDef result;
+  CAN_FilterTypeDef	canFilter;
+
+  canFilter.FilterMode = CAN_FILTERMODE_IDMASK;	    //mask mode
+  canFilter.FilterScale = CAN_FILTERSCALE_32BIT;	    //32bit
+
+
+#if 0
     //设置1：接收所有帧
       canFilter.FilterIdHigh = 0x0000;		            //CAN_FxR1 的高16位
     	canFilter.FilterIdLow = 0x0000;			            //CAN_FxR1 的低16位
     	canFilter.FilterMaskIdHigh = 0x0000;	            //CAN_FxR2的高16位。所有位任意
     	canFilter.FilterMaskIdLow = 0x0000;		            //CAN_FxR2的低16位，所有位任意
-  #endif
-#if 1
+#endif
+#if 0
       canFilter.FilterIdHigh = ((((uint32_t)CERTER_CPU_CAN_ID<<3)|
 										 CAN_ID_EXT|CAN_RTR_DATA)&0xFFFF0000)>>16;		//要筛选的ID高位 	            //CAN_FxR1 的高16位
       canFilter.FilterIdLow = (((uint32_t)CERTER_CPU_CAN_ID<<3)|
@@ -152,16 +165,52 @@ HAL_StatusTypeDef CAN_SetFilters(void)
     canFilter.FilterIdLow = (((uint32_t)0x1<<3)|CAN_ID_EXT|CAN_RTR_DATA)&0xFFFF;//CAN_FxR1 的低16位
     canFilter.FilterMaskIdHigh = 0x0000;	            //CAN_FxR2的高16位
     canFilter.FilterMaskIdLow = (((uint32_t)0x1<<3)|CAN_ID_EXT|CAN_RTR_DATA)&0xFFFF;//CAN_FxR2的低16位
-#endif   
-    canFilter.FilterFIFOAssignment = CAN_RX_FIFO1;		//应用于FIFO0
-    canFilter.FilterActivation = ENABLE;		        //使用筛选器
-    //canFilter.SlaveStartFilterBank = 14;		        //从CAN控制器筛选器起始的Bank
-		result=HAL_CAN_ConfigFilter(&hcan2, &canFilter);
-		
-		if(result != HAL_OK)
-		{
-			Error_Handler();
-		}
+#endif 
+
+  dh_set_canid(&canid_std, CAN_ID_RTR, CAN_ID_RTR_DATA, CAN_ID_IDE-CAN_ID_RTR);
+  dh_set_canid(&canid_std, CAN_ID_IDE, CAN_ID_IDE_EXTEND, CAN_ID_FC-CAN_ID_IDE);
+  //dh_set_canid(&canid_std, CAN_ID_FC, 1, CAN_ID_FT-CAN_ID_FC);
+  //dh_set_canid(&canid_std, CAN_ID_FT, CAN_ID_FT_SINGEL, CAN_ID_SA-CAN_ID_FT);
+  //dh_set_canid(&canid_std, CAN_ID_SA, CAN_ID_ADDRESS_CENRER_CPU, CAN_ID_DA-CAN_ID_SA);
+  dh_set_canid(&canid_std, CAN_ID_DA, CAN_ID_ADDRESS_PDCU1_SUB, CAN_ID_DT-CAN_ID_DA);
+  dh_set_canid(&mask_id, CAN_ID_DA, CAN_ID_ADDRESS_MASK_ENABLE, CAN_ID_DT-CAN_ID_DA);
+  //dh_set_canid(&canid_std, CAN_ID_DT, CAN_ID_DT_SHORT_CMD, CAN_ID_LT-CAN_ID_DT);
+  //dh_set_canid(&canid_std, CAN_ID_LT, CAT_ID_LT_BUSA, CAT_ID_P-CAN_ID_LT);
+  //dh_set_canid(&canid_std, CAT_ID_P, CAT_ID_P_MAIN, MAX_CAN_ID_BIT_LEN-CAT_ID_P);
+
+  canFilter.FilterActivation = ENABLE;
+
+  if(can_num)
+  {
+    canFilter.FilterFIFOAssignment = CAN_RX_FIFO1;		//CAN2 绑定FIFO1
+    dh_set_canid(&canid_std, CAN_ID_LT, CAT_ID_LT_BUSB, CAN_ID_P-CAN_ID_LT);//CAN2是总线，需筛选出总线B
+    dh_set_canid(&mask_id, CAN_ID_LT, 0x1, CAN_ID_P-CAN_ID_LT);
+
+    canFilter.FilterBank = 14;		                    //筛选器14，筛选本控制器地址
+
+    Can_Mask_Value_set(&canFilter, canid_std, mask_id);
+
+    result=HAL_CAN_ConfigFilter(&hcan2, &canFilter);
+    if(result != HAL_OK)
+    {
+      Error_Handler();
+      return result;
+    }
+
+    canFilter.FilterBank = 15;		                    //筛选器15，筛选广播地址
+    dh_set_canid(&canid_std, CAN_ID_DA, CAN_ID_ADDRESS_BOARTCAST, CAN_ID_DT-CAN_ID_DA);
+    dh_set_canid(&mask_id, CAN_ID_DA, CAN_ID_ADDRESS_MASK_ENABLE, CAN_ID_DT-CAN_ID_DA);
+
+    Can_Mask_Value_set(&canFilter, canid_std, mask_id);
+
+    result=HAL_CAN_ConfigFilter(&hcan2, &canFilter);
+    if(result != HAL_OK)
+    {
+      Error_Handler();
+      return result;
+    }
+  }
+
     return result;
 }
 
@@ -173,34 +222,27 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
     if(HAL_CAN_GetRxFifoFillLevel(&hcan2, CAN_RX_FIFO1))
     {
       HAL_CAN_GetRxMessage(&hcan2, CAN_RX_FIFO1, &RxMessage, can2_recv_data);
-      if(can2_recv_data[0] == 0xFF && can2_recv_data[3] == 0x80)
-      {
-        switch (can2_recv_data[1])
-        {
-          case 0:
-          case 1:
-          case 2:dh_gpio_1pluse(1000, can2_recv_data[1]);
-                dh_can2_data_send(DEVICE_CAN_ID, can2_recv_data, RxMessage.DLC);
-                break;
-          
-          default:
-            break;
-        }
-      }
+      dh_can_data_cmd_process(RxMessage.ExtId, can2_recv_data);
     }
-  }
+	}
+}	
+	
+void dh_set_canid(uint32_t* canid, dh_can_id_position_t position, uint32_t position_data, uint8_t position_data_bit_cnt)
+{
+  *canid &= ~((0x1<<position_data_bit_cnt-1)<<position);
+  *canid |= position_data<<position; 
 }
 
-
-void dh_can2_data_send(uint32_t msgid, uint8_t *data, uint8_t data_len)
+//目前项目必定发送数据扩展帧，而且CAN1 CAN2同时发，需先调用dh_set_canid设置好msgid传入
+void dh_can_data_send(uint32_t msgid, uint8_t *data, uint8_t data_len)
 {
     CAN_TxHeaderTypeDef TxMessage;
     uint32_t TxMailbox;
-    TxMessage.IDE = CAN_ID_EXT;                         //设置ID类型
-    //TxMessage.StdId = msgid;                            //设置ID号
-    TxMessage.ExtId = msgid;
-    TxMessage.RTR = CAN_RTR_DATA;                       //设置传送数据帧
-    TxMessage.DLC = data_len;                                  //设置数据长度
+    TxMessage.IDE = CAN_ID_EXT;//扩展帧
+    //TxMessage.StdId = msgid;
+    TxMessage.ExtId = msgid>>3;//传入的id 是包含了 保留位，RTR和IDE三位，所以需要右移三位，保证只有低29位有效
+    TxMessage.RTR = CAN_RTR_DATA;
+    TxMessage.DLC = data_len;
 
     if(HAL_CAN_AddTxMessage(&hcan2, &TxMessage, data, &TxMailbox) != HAL_OK) 
     {
