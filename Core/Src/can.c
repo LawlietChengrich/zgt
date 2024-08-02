@@ -226,10 +226,10 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
     }
 	}
 }	
-	
+
 void dh_set_canid(uint32_t* canid, dh_can_id_position_t position, uint32_t position_data, uint8_t position_data_bit_cnt)
 {
-  *canid &= ~((0x1<<position_data_bit_cnt-1)<<position);
+	*canid &= ~(((0x1<<position_data_bit_cnt)-1)<<position);
   *canid |= position_data<<position; 
 }
 
