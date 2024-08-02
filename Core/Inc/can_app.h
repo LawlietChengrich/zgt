@@ -7,6 +7,9 @@ extern "C" {
 
 #include "main.h"
 
+#define MPPT_NUM    (9)
+#define MAX_APP_CAN_DATA_LEN (64)
+
 typedef enum
 {
     CAN_CMD_REMOTE_WING = 0xFD,
@@ -104,9 +107,33 @@ typedef struct
     uint8_t lt;
     uint8_t p;
 }dh_can_data_t;
+
+typedef struct
+{
+    uint8_t data_z;
+    uint8_t data_f;
+}dh_can_mppt_ui_t;
+
+typedef struct
+{
+    dh_can_mppt_ui_t value_u[MPPT_NUM];
+    dh_can_mppt_ui_t value_i[MPPT_NUM];
+    uint8_t mppt_st1;
+    uint8_t mppt_st2;
+}dh_can_mppt_inf_t;
+
+typedef struct
+{
+    uint8_t tmt;
+    uint8_t remote_cmd_cnt;
+    uint8_t cmd_cnt;//high 4:correct cmd, low 4:err cmd
+    uint8_t cmd_latest;
+    uint8_t backup_data_cnt;
+}dh_can_remote_head_t;
 #pragma pack()
 
 extern void dh_can_data_cmd_process(uint32_t canid, uint8_t* data);
+extern void dh_can_data_send_process(void);
 
 #ifdef __cplusplus
 }

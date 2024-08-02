@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "gpio.h"
+#include "adc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,6 +56,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern DMA_HandleTypeDef hdma_adc1;
 extern CAN_HandleTypeDef hcan2;
 /* USER CODE BEGIN EV */
 void dh_gpio_1pluse(uint16_t ms, uint16_t gpio_num);
@@ -185,7 +187,6 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-	dh_gpio_delay_process();
 
 
   /* USER CODE END SysTick_IRQn 0 */
@@ -201,6 +202,28 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32f4xx.s).                    */
 /******************************************************************************/
+
+/**
+  * @brief This function handles DMA2 stream0 global interrupt.
+  */
+void DMA2_Stream0_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream0_IRQn 0 */
+  if (__HAL_DMA_GET_FLAG(&hdma_adc1, __HAL_DMA_GET_TC_FLAG_INDEX(&hdma_adc1)) != RESET)
+  {
+    dh_cal_adcvalue_aver();
+    /* Clear the DMA transfer complete flag */
+   __HAL_DMA_CLEAR_FLAG (&hdma_adc1, __HAL_DMA_GET_TC_FLAG_INDEX(&hdma_adc1));
+
+    /* Handle ADC conversion complete event */
+    // ...
+  }
+  /* USER CODE END DMA2_Stream0_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_adc1);
+  /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream0_IRQn 1 */
+}
 
 /**
   * @brief This function handles CAN2 RX1 interrupt.

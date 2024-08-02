@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "can_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,7 +56,7 @@ static void MX_NVIC_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+uint8_t running = 0;
 /* USER CODE END 0 */
 
 /**
@@ -108,6 +108,8 @@ int main(void)
     /* USER CODE BEGIN 3 */
     //LL_mDelay(500);
 		dh_gpio_main_process();
+    dh_can_data_send_process();
+		running++;
   }
   /* USER CODE END 3 */
 }
@@ -164,7 +166,7 @@ void SystemClock_Config(void)
 static void MX_NVIC_Init(void)
 {
   /* CAN2_RX1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(CAN2_RX1_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(CAN2_RX1_IRQn, 2, 0);
   HAL_NVIC_EnableIRQ(CAN2_RX1_IRQn);
 }
 

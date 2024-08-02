@@ -35,13 +35,17 @@ extern "C" {
 extern ADC_HandleTypeDef hadc1;
 
 /* USER CODE BEGIN Private defines */
-
+#define MAX_ADC_CHN_NUM (2)
+#define ADC_AVERAGE_CAL_TIMES (8)
 /* USER CODE END Private defines */
 
 void MX_ADC1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+extern void dh_cal_adcvalue_aver(void);
+extern DMA_HandleTypeDef hdma_adc1;
+extern __IO uint16_t ADC_ConvertedValue[MAX_ADC_CHN_NUM];
+extern volatile uint16_t adc_value_aver[MAX_ADC_CHN_NUM];
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

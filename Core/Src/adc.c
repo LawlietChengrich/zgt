@@ -21,7 +21,12 @@
 #include "adc.h"
 
 /* USER CODE BEGIN 0 */
-uint16_t ADC_ConvertedValue[3];
+void dh_cal_adcvalue_aver(void);
+void dh_adc_dma_transfer_finish(DMA_HandleTypeDef *DmaHandle);
+
+__IO uint16_t ADC_ConvertedValue[MAX_ADC_CHN_NUM];
+volatile uint16_t adc_value_aver[MAX_ADC_CHN_NUM];
+
 /* USER CODE END 0 */
 
 ADC_HandleTypeDef hadc1;
@@ -51,7 +56,7 @@ void MX_ADC1_Init(void)
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 3;
+  hadc1.Init.NbrOfConversion = 2;
   hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
@@ -60,25 +65,17 @@ void MX_ADC1_Init(void)
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_8;
+  sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_9;
+  sConfig.Channel = ADC_CHANNEL_3;
   sConfig.Rank = 2;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
-  sConfig.Channel = ADC_CHANNEL_10;
-  sConfig.Rank = 3;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -102,22 +99,15 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     /* ADC1 clock enable */
     __HAL_RCC_ADC1_CLK_ENABLE();
 
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
     /**ADC1 GPIO Configuration
-    PC0     ------> ADC1_IN10
-    PB0     ------> ADC1_IN8
-    PB1     ------> ADC1_IN9
+    PA0-WKUP     ------> ADC1_IN0
+    PA3     ------> ADC1_IN3
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_0;
+    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_3;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /* ADC1 DMA Init */
     /* ADC1 Init */
@@ -139,7 +129,8 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     __HAL_LINKDMA(adcHandle,DMA_Handle,hdma_adc1);
 
   /* USER CODE BEGIN ADC1_MspInit 1 */
-  HAL_DMA_Start(&hdma_adc1,((uint32_t)ADC1+0x4c),(uint32_t)&ADC_ConvertedValue, 3);//3个半字的长度，单位是有上面定�?
+  HAL_DMA_Start_IT(&hdma_adc1,((uint32_t)ADC1+0x4c),(uint32_t)&ADC_ConvertedValue, MAX_ADC_CHN_NUM);
+		//HAL_DMA_Start(&hdma_adc1,((uint32_t)ADC1+0x4c),(uint32_t)&ADC_ConvertedValue, MAX_ADC_CHN_NUM);
   /* USER CODE END ADC1_MspInit 1 */
   }
 }
@@ -156,13 +147,10 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     __HAL_RCC_ADC1_CLK_DISABLE();
 
     /**ADC1 GPIO Configuration
-    PC0     ------> ADC1_IN10
-    PB0     ------> ADC1_IN8
-    PB1     ------> ADC1_IN9
+    PA0-WKUP     ------> ADC1_IN0
+    PA3     ------> ADC1_IN3
     */
-    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_0);
-
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_0|GPIO_PIN_1);
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_0|GPIO_PIN_3);
 
     /* ADC1 DMA DeInit */
     HAL_DMA_DeInit(adcHandle->DMA_Handle);
@@ -173,5 +161,25 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 }
 
 /* USER CODE BEGIN 1 */
+//读取多次，取中
+void dh_cal_adcvalue_aver(void)
+{
+  uint8_t i;
+  static uint8_t times = 0;
+  static uint16_t buffer[MAX_ADC_CHN_NUM] = {0};
+  for(i = 0; i < MAX_ADC_CHN_NUM; i++)
+  {
+    buffer[i] += ADC_ConvertedValue[i];
+  }
+  if(++times >= ADC_AVERAGE_CAL_TIMES)
+  {
+    for(i = 0; i < MAX_ADC_CHN_NUM; i++)
+    {
+      adc_value_aver[i] = buffer[i]/ADC_AVERAGE_CAL_TIMES;
+      buffer[i] = 0;
+    }
+    times = 0;
+  }
+}
 
 /* USER CODE END 1 */
