@@ -9,13 +9,12 @@ extern "C" {
 
 #define MPPT_NUM    (9)
 #define MAX_APP_CAN_DATA_LEN (64)
+#define CAN_APP_DATA_UINT_LEN   (8)
 
-typedef enum
-{
-    CAN_CMD_REMOTE_WING = 0xFD,
-    CAN_CMD_REMOTE_BAT = 0xFE,
-    CAN_CMD_REMOTE_MPPT = 0xFF,
-}dh_can_cmd_remote_t;
+#define CAN_CMD_REMOTE_WING (0xFD)
+#define CAN_CMD_REMOTE_BAT  (0xFE)
+#define CAN_CMD_REMOTE_MPPT (0xFF)
+
 
 typedef enum
 {
@@ -96,6 +95,59 @@ typedef enum
     CAN_CMD_ANTENNA_B_UNLOCK = 0x05,
 }dh_can_cmd_wing2_t;
 
+typedef struct
+{
+    uint8_t mppt1_status:1;
+    uint8_t mppt2_status:1;
+    uint8_t mppt3_status:1;
+    uint8_t mppt4_status:1;
+    uint8_t mppt5_status:1;
+    uint8_t mppt6_status:1;
+    uint8_t mppt7_status:1;
+    uint8_t mppt8_status:1;
+}bit_union_mppt_t;
+
+typedef struct
+{
+    uint8_t mppt9_status:1;
+    uint8_t mppt_reserve:7;
+}bit_union_mppt1_t;
+
+typedef struct
+{
+    uint8_t low_vol_protect:1;
+    uint8_t self_energizing:1;
+    uint8_t discharge_status:1;
+    uint8_t reserve:5;
+}bit_union_bat_t;
+
+typedef struct
+{
+    uint8_t qv_a:1;
+    uint8_t qv_b:1;
+    uint8_t hall:1;
+    uint8_t phase_ar_sda:1;
+    uint8_t phase_ar_sdb:1;
+    uint8_t phase_ar_rv:1;
+    uint8_t reserve:2;
+}bit_union_wing1_t;
+
+typedef struct
+{
+    uint8_t flyx:1;
+    uint8_t flyy:1;
+    uint8_t flyz:1;
+    uint8_t flys:1;
+    uint8_t board_lock_status:1;
+    uint8_t reserve:3;
+}bit_union_wing2_t;
+
+typedef struct
+{
+    uint8_t correct_cnt:4;
+    uint8_t error_cnt:4;
+}bit_union_cmd_cnt_t;
+
 #pragma pack(1)
 typedef struct
 {
@@ -112,21 +164,36 @@ typedef struct
 {
     uint8_t data_z;
     uint8_t data_f;
-}dh_can_mppt_ui_t;
+}dh_can_ui_t;
 
 typedef struct
 {
-    dh_can_mppt_ui_t value_u[MPPT_NUM];
-    dh_can_mppt_ui_t value_i[MPPT_NUM];
-    uint8_t mppt_st1;
-    uint8_t mppt_st2;
+    dh_can_ui_t value_u[MPPT_NUM];
+    dh_can_ui_t value_i[MPPT_NUM];
+    bit_union_mppt_t mppt_st1;
+    bit_union_mppt1_t mppt_st2;
 }dh_can_mppt_inf_t;
+
+typedef struct
+{
+    dh_can_ui_t bus_u;
+    dh_can_ui_t bat_u;
+    dh_can_ui_t load_i_sum;
+    dh_can_ui_t bat_i;
+    bit_union_bat_t status;
+}dh_can_bat_inf_t;
+
+typedef struct
+{
+    bit_union_wing1_t status1;
+    bit_union_wing2_t status2;
+}dh_can_wing_inf_t;
 
 typedef struct
 {
     uint8_t tmt;
     uint8_t remote_cmd_cnt;
-    uint8_t cmd_cnt;//high 4:correct cmd, low 4:err cmd
+    bit_union_cmd_cnt_t cmd_cnt;//high 4:correct cmd, low 4:err cmd
     uint8_t cmd_latest;
     uint8_t backup_data_cnt;
 }dh_can_remote_head_t;
