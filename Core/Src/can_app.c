@@ -5,6 +5,7 @@
 #include "string.h"
 
 uint8_t dh_can_cmd_remote_req(uint8_t* data);
+uint8_t dh_can_cmd_can_reset(uint8_t* data);
 void dh_can_cmd_mppt_get(void);
 void dh_can_cmd_bat_get(void);
 void dh_can_cmd_wing_get(void);
@@ -43,7 +44,16 @@ void dh_can_data_cmd_process(uint32_t canid, uint8_t* data)
             }
             break;
         case CAN_ID_DT_RESET:
-            //remote_data_head.cmd_latest = data[0];
+            ret = dh_can_cmd_can_reset(data);
+            if(ret)
+            {
+                remote_data_head.cmd_latest = data[0];
+                remote_data_head.cmd_cnt.correct_cnt++;
+            }
+            else
+            {
+                remote_data_head.cmd_cnt.error_cnt++;
+            }
             break;
         case CAN_ID_DT_SHORT_CMD:
             ret = dh_can_cmd_short(data);
@@ -98,6 +108,30 @@ uint8_t dh_can_cmd_remote_req(uint8_t* data)
             break;                             
         default:
 			ret = 0;
+            break;
+    }
+
+    return ret;
+}
+
+uint8_t dh_can_cmd_can_reset(uint8_t* data)
+{
+    uint8_t ret = 1;
+    switch (data[0])
+    {
+        case CAN_CMD_RESET_CAN12:
+            break;
+
+        case CAN_CMD_RESET_CAN1:
+            break;
+
+        case CAN_CMD_RESET_CAN2:
+			__HAL_CAN_RESET_HANDLE_STATE(&hcan2);
+            MX_CAN2_Init();
+            break;  
+     
+        default:
+            ret = 0;
             break;
     }
 

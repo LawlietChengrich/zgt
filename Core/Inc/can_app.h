@@ -15,6 +15,10 @@ extern "C" {
 #define CAN_CMD_REMOTE_BAT  (0xFE)
 #define CAN_CMD_REMOTE_MPPT (0xFF)
 
+#define CAN_CMD_RESET_CAN12 (0xF9)
+#define CAN_CMD_RESET_CAN1  (0xF8)
+#define CAN_CMD_RESET_CAN2  (0xF7)
+
 
 typedef enum
 {
