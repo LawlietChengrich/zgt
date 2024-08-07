@@ -67,7 +67,11 @@ void dh_gpio_1pluse(uint16_t ms, uint16_t gpio_num)
 {
   if(gpio_delay_us[gpio_num] == 0)
   {
+#if PLUSE_LOW_TO_HIGH
     LL_GPIO_ResetOutputPin(dh_gpio_struct[gpio_num].group, dh_gpio_struct[gpio_num].pin);
+#else
+    LL_GPIO_SetOutputPin(dh_gpio_struct[gpio_num].group, dh_gpio_struct[gpio_num].pin);
+#endif
     gpio_delay_us[gpio_num] = HAL_GetTick()  + ms * 1000;
     if(gpio_delay_us[gpio_num] < HAL_GetTick())
     {
@@ -100,7 +104,11 @@ void dh_gpio_main_process(void)
       {
         if(HAL_GetTick() > gpio_delay_us[i])
         {
+#if PLUSE_LOW_TO_HIGH
             LL_GPIO_SetOutputPin(dh_gpio_struct[i].group, dh_gpio_struct[i].pin);
+#else
+            LL_GPIO_ResetOutputPin(dh_gpio_struct[i].group, dh_gpio_struct[i].pin);
+#endif
             gpio_delay_us[i] = 0;
         }
       }
@@ -114,19 +122,6 @@ void dh_gpio_main_process(void)
       }
     }
   }
-}
-
-void dh_gpio_delay_process(void)
-{
-	uint8_t i;
-
-	for(i=0; i<GPIO_PLUSE_CTL_NUM; i++)
-	{
-		if(gpio_delay_us[i])
-		{
-			gpio_delay_us[i]--;
-		}
-	}
 }
 
 /* USER CODE END 1 */

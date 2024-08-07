@@ -33,6 +33,8 @@ extern "C" {
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN Private defines */
+#define PLUSE_LOW_TO_HIGH   (0)
+
 #define GPIO_PLUSE_CTL_NUM  18
 #define GPIO_LEVEL_CTL_NUM  2
 #define GPIO_PLUSE_MS     150
@@ -50,7 +52,6 @@ typedef struct
 extern void dh_gpio_1pluse(uint16_t ms, uint16_t gpio_num);
 extern void dh_gpio_set_level(uint16_t gpio_num, uint8_t level);
 extern void dh_gpio_main_process(void);
-extern void dh_gpio_delay_process(void);
 
 /* USER CODE END Prototypes */
 
