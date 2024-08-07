@@ -18,7 +18,8 @@ extern "C" {
 #define CAN_CMD_RESET_CAN12 (0xF9)
 #define CAN_CMD_RESET_CAN1  (0xF8)
 #define CAN_CMD_RESET_CAN2  (0xF7)
-
+#define BACKUP_DATA_LEN (96)
+#define INVAULD_LEN_16  (0xffff)
 
 typedef enum
 {
@@ -201,6 +202,14 @@ typedef struct
     uint8_t cmd_latest;
     uint8_t backup_data_cnt;
 }dh_can_remote_head_t;
+
+typedef struct
+{
+    uint16_t datalen;
+    uint8_t data[BACKUP_DATA_LEN];
+    uint8_t checksum;
+}dh_can_backup_data_t;
+
 #pragma pack()
 
 extern void dh_can_data_cmd_process(uint32_t canid, uint8_t* data);

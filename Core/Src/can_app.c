@@ -4,6 +4,8 @@
 #include "adc.h"
 #include "string.h"
 
+static uint8_t backup_data[BACKUP_DATA_LEN] = {0};
+
 uint8_t dh_can_cmd_remote_req(uint8_t* data);
 uint8_t dh_can_cmd_can_reset(uint8_t* data);
 void dh_can_cmd_mppt_get(void);
@@ -15,6 +17,7 @@ uint8_t dh_can_cmd_mppt_ctrl(dh_can_cmd_mppt_t cmd);
 uint8_t dh_can_cmd_bat_ctrl(dh_can_cmd_bat_t cmd);
 uint8_t dh_can_cmd_wing1_ctrl(dh_can_cmd_wing1_t cmd);
 uint8_t dh_can_cmd_wing2_ctrl(dh_can_cmd_wing2_t cmd);
+uint8_t dh_can_cmd_recv_boardcast_backupdata(uint8_t *data, uint8_t ft, uint8_t fc);
 
 dh_can_data_t can_data;
 uint8_t can_data_send_buf[MAX_APP_CAN_DATA_LEN];
@@ -84,6 +87,11 @@ void dh_can_data_cmd_process(uint32_t canid, uint8_t* data)
         case CAN_ID_DT_BOARDCAST_POSTURE:
             break;
         case CAN_ID_DT_BOARDCAST_BACKUP_DATA:
+            ret = dh_can_cmd_recv_boardcast_backupdata(data, can_data.ft, can_data.fc);
+            if(ret == 0)
+            {
+                remote_data_head.cmd_cnt.error_cnt++;
+            }
             //remote_data_head.backup_data_cnt++;
             break;
         default:
@@ -333,7 +341,7 @@ void dh_can_data_send_process(void)
         dh_set_canid(&can_id, CAN_ID_IDE, CAN_ID_IDE_EXTEND, CAN_ID_FC-CAN_ID_IDE);
         dh_set_canid(&can_id, CAN_ID_SA, CAN_ID_ADDRESS_PDCU1_SUB, CAN_ID_DA-CAN_ID_SA);
         dh_set_canid(&can_id, CAN_ID_DA, CAN_ID_ADDRESS_CENRER_CPU, CAN_ID_DT-CAN_ID_DA);
-        dh_set_canid(&can_id, CAN_ID_DT, CAN_ID_DT_BACKUP_DATA_RET, CAN_ID_LT-CAN_ID_DT);
+        dh_set_canid(&can_id, CAN_ID_DT, CAN_ID_DT_REMOTE_RET, CAN_ID_LT-CAN_ID_DT);
         dh_set_canid(&can_id, CAN_ID_LT, CAT_ID_LT_BUSB, CAN_ID_P-CAN_ID_LT);
         dh_set_canid(&can_id, CAN_ID_P, CAT_ID_P_SUB, MAX_CAN_ID_BIT_LEN-CAN_ID_P);
 
@@ -407,4 +415,91 @@ uint8_t dh_can_cmd_wing1_ctrl(dh_can_cmd_wing1_t cmd)
 uint8_t dh_can_cmd_wing2_ctrl(dh_can_cmd_wing2_t cmd)
 {
 	return 0;
+}
+
+uint8_t dh_can_cmd_recv_boardcast_backupdata(uint8_t *data, uint8_t ft, uint8_t fc)
+{
+    uint8_t i, checksum = 0, len_temp;
+    uint8_t* p = 0;
+    static dh_can_backup_data_t data_t =
+    {
+        .datalen = INVAULD_LEN_16,
+        .checksum = 0,
+    };
+
+    p = (uint8_t*)(&data_t);
+
+    fc--;
+    if(fc>(BACKUP_DATA_LEN/CAN_APP_DATA_UINT_LEN))
+    {
+        goto ERR_DATA_RBB;
+    }
+
+    if(ft == CAN_ID_FT_MULTI_FISRT)
+    {
+        if(data_t.datalen != INVAULD_LEN_16)
+        {
+            goto ERR_DATA_RBB;
+        }
+        memcpy((p+CAN_APP_DATA_UINT_LEN*fc), data, CAN_APP_DATA_UINT_LEN);
+        len_temp = CAN_APP_DATA_UINT_LEN - sizeof(data_t.datalen);
+        if(data_t.datalen >= len_temp)
+        {
+            data_t.datalen -= len_temp;
+        }
+        else
+        {
+            goto ERR_DATA_RBB;
+		}
+    }
+    else if(ft == CAN_ID_FT_MULTI_END)
+    {
+        len_temp = sizeof(dh_can_backup_data_t) - fc*CAN_APP_DATA_UINT_LEN;
+        if(data_t.datalen == INVAULD_LEN_16 || data_t.datalen < len_temp)
+        {
+            goto ERR_DATA_RBB;
+        }
+        memcpy((p+CAN_APP_DATA_UINT_LEN*fc), data, len_temp);
+				
+        data_t.datalen-=len_temp;
+    }
+    else if(ft == CAN_ID_FT_MULTI_MID)
+    {
+        if(data_t.datalen == INVAULD_LEN_16  || data_t.datalen < CAN_APP_DATA_UINT_LEN)
+        {
+            goto ERR_DATA_RBB;
+        }
+        memcpy((p+CAN_APP_DATA_UINT_LEN*fc), data, CAN_APP_DATA_UINT_LEN);
+        data_t.datalen -= CAN_APP_DATA_UINT_LEN;
+    }
+    else
+    {
+        goto ERR_DATA_RBB;
+    }
+
+    if(data_t.datalen == 0)
+    {
+        data_t.datalen = INVAULD_LEN_16;
+        len_temp  = sizeof(data_t.datalen);
+        for(i = 0; i < BACKUP_DATA_LEN; i++)
+        {
+            checksum += *(p+i+len_temp);
+        }
+
+        if(checksum != data_t.checksum)
+        {
+            goto ERR_DATA_RBB;
+        }
+        else
+        {
+            memcpy(backup_data, &data_t.data, BACKUP_DATA_LEN);
+            remote_data_head.backup_data_cnt++;
+        }
+    }
+
+    return 1;
+
+ERR_DATA_RBB:
+     data_t.datalen = INVAULD_LEN_16;
+     return 0;
 }
