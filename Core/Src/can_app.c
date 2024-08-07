@@ -4,7 +4,7 @@
 #include "adc.h"
 #include "string.h"
 
-static uint8_t backup_data[BACKUP_DATA_LEN] = {0};
+static dh_backup_data_t backup_data = {0};
 
 uint8_t dh_can_cmd_remote_req(uint8_t* data);
 uint8_t dh_can_cmd_can_reset(uint8_t* data);
@@ -18,9 +18,11 @@ uint8_t dh_can_cmd_bat_ctrl(dh_can_cmd_bat_t cmd);
 uint8_t dh_can_cmd_wing1_ctrl(dh_can_cmd_wing1_t cmd);
 uint8_t dh_can_cmd_wing2_ctrl(dh_can_cmd_wing2_t cmd);
 uint8_t dh_can_cmd_recv_boardcast_backupdata(uint8_t *data, uint8_t ft, uint8_t fc);
+uint8_t dh_can_cmd_backup_data_req(uint8_t* data);
 
 dh_can_data_t can_data;
 uint8_t can_data_send_buf[MAX_APP_CAN_DATA_LEN];
+volatile static dh_can_dt_t can_data_ret_cmd_cur = CAN_ID_DT_INVALID;
 volatile static uint8_t can_data_send_pkg_sum = 0;
 volatile static uint8_t can_data_send_pkg_cur = 0;
 
@@ -40,8 +42,19 @@ void dh_can_data_cmd_process(uint32_t canid, uint8_t* data)
     switch ((dh_can_dt_t)can_data.dt)
     {
         case CAN_ID_DT_REMOTE_REQ:
-            ret = dh_can_cmd_remote_req(data);
-            if(ret == 0)
+            if(can_data_ret_cmd_cur == CAN_ID_DT_INVALID)
+            {
+                ret = dh_can_cmd_remote_req(data);
+                if(ret == 0)
+                {
+                    remote_data_head.cmd_cnt.error_cnt++;
+                }
+                else
+                {
+                    can_data_ret_cmd_cur = CAN_ID_DT_REMOTE_RET;
+                }
+            }
+            else
             {
                 remote_data_head.cmd_cnt.error_cnt++;
             }
@@ -71,14 +84,26 @@ void dh_can_data_cmd_process(uint32_t canid, uint8_t* data)
             }
             break;
         case CAN_ID_DT_BACKUP_DATA_REQ:
-            //remote_data_head.cmd_latest = data[0];//F5
+            if(can_data_ret_cmd_cur == CAN_ID_DT_INVALID)
+            {
+                ret = dh_can_cmd_backup_data_req(data);
+                if(ret)
+                {
+                    remote_data_head.cmd_latest = data[0];
+                    remote_data_head.cmd_cnt.correct_cnt++;
+                    can_data_ret_cmd_cur = CAN_ID_DT_BACKUP_DATA_RET;
+                }
+                else
+                {
+                    remote_data_head.cmd_cnt.error_cnt++;
+                }
+            }
+            else
+            {
+                remote_data_head.cmd_cnt.error_cnt++;
+            }
             break;
         case CAN_ID_DT_LONG_CMD:
-            break;
-        case CAN_ID_DT_BACKUP_DATA_RET:
-            //remote_data_head.cmd_latest = data[0];//EE
-            break;
-        case CAN_ID_DT_REMOTE_RET:
             break;
         case CAN_ID_DT_BOARDCAST_TIME:
             break;
@@ -341,16 +366,35 @@ void dh_can_data_send_process(void)
         dh_set_canid(&can_id, CAN_ID_IDE, CAN_ID_IDE_EXTEND, CAN_ID_FC-CAN_ID_IDE);
         dh_set_canid(&can_id, CAN_ID_SA, CAN_ID_ADDRESS_PDCU1_SUB, CAN_ID_DA-CAN_ID_SA);
         dh_set_canid(&can_id, CAN_ID_DA, CAN_ID_ADDRESS_CENRER_CPU, CAN_ID_DT-CAN_ID_DA);
-        dh_set_canid(&can_id, CAN_ID_DT, CAN_ID_DT_REMOTE_RET, CAN_ID_LT-CAN_ID_DT);
+        if(can_data_ret_cmd_cur != CAN_ID_DT_INVALID)
+        {
+            dh_set_canid(&can_id, CAN_ID_DT, can_data_ret_cmd_cur, CAN_ID_LT-CAN_ID_DT);
+        }
+        else
+        {
+            return;
+        }
         dh_set_canid(&can_id, CAN_ID_LT, CAT_ID_LT_BUSB, CAN_ID_P-CAN_ID_LT);
         dh_set_canid(&can_id, CAN_ID_P, CAT_ID_P_SUB, MAX_CAN_ID_BIT_LEN-CAN_ID_P);
 
         dh_set_canid(&can_id, CAN_ID_FC, can_data_send_pkg_cur+1, CAN_ID_FT-CAN_ID_FC);
         if(can_data_send_pkg_cur == 0)
         {
-            dh_set_canid(&can_id, CAN_ID_FT, CAN_ID_FT_MULTI_FISRT, CAN_ID_SA-CAN_ID_FT);
-            dh_can_data_send(can_id, &can_data_send_buf[can_data_send_pkg_cur*CAN_APP_DATA_UINT_LEN], CAN_APP_DATA_UINT_LEN);
-            can_data_send_pkg_cur++;
+            if (can_data_send_pkg_sum == 1)
+            {
+				//单帧
+                dh_set_canid(&can_id, CAN_ID_FT, CAN_ID_FT_SINGEL, CAN_ID_SA-CAN_ID_FT);
+                dh_can_data_send(can_id, &can_data_send_buf[can_data_send_pkg_cur*CAN_APP_DATA_UINT_LEN], CAN_APP_DATA_UINT_LEN);
+                can_data_send_pkg_sum = 0;
+                can_data_ret_cmd_cur = CAN_ID_DT_INVALID;
+            }
+            else
+            {
+				//复合帧
+                dh_set_canid(&can_id, CAN_ID_FT, CAN_ID_FT_MULTI_FISRT, CAN_ID_SA-CAN_ID_FT);
+                dh_can_data_send(can_id, &can_data_send_buf[can_data_send_pkg_cur*CAN_APP_DATA_UINT_LEN], CAN_APP_DATA_UINT_LEN);
+                can_data_send_pkg_cur++;
+            }
         }
         else if(can_data_send_pkg_cur == (can_data_send_pkg_sum - 1))
         {
@@ -358,6 +402,7 @@ void dh_can_data_send_process(void)
             dh_can_data_send(can_id, &can_data_send_buf[can_data_send_pkg_cur*CAN_APP_DATA_UINT_LEN], CAN_APP_DATA_UINT_LEN);
             can_data_send_pkg_sum = 0;
             can_data_send_pkg_cur = 0;
+            can_data_ret_cmd_cur = CAN_ID_DT_INVALID;
         }
         else
         {
@@ -424,7 +469,11 @@ uint8_t dh_can_cmd_recv_boardcast_backupdata(uint8_t *data, uint8_t ft, uint8_t 
     static dh_can_backup_data_t data_t =
     {
         .datalen = INVAULD_LEN_16,
-        .checksum = 0,
+        .data = 
+        {
+            .data = {0},
+            .checksum = 0,
+        },
     };
 
     p = (uint8_t*)(&data_t);
@@ -441,6 +490,10 @@ uint8_t dh_can_cmd_recv_boardcast_backupdata(uint8_t *data, uint8_t ft, uint8_t 
         {
             goto ERR_DATA_RBB;
         }
+		if(fc>0)
+		{
+			goto ERR_DATA_RBB;
+		}
         memcpy((p+CAN_APP_DATA_UINT_LEN*fc), data, CAN_APP_DATA_UINT_LEN);
         len_temp = CAN_APP_DATA_UINT_LEN - sizeof(data_t.datalen);
         if(data_t.datalen >= len_temp)
@@ -486,13 +539,13 @@ uint8_t dh_can_cmd_recv_boardcast_backupdata(uint8_t *data, uint8_t ft, uint8_t 
             checksum += *(p+i+len_temp);
         }
 
-        if(checksum != data_t.checksum)
+        if(checksum != data_t.data.checksum)
         {
             goto ERR_DATA_RBB;
         }
         else
         {
-            memcpy(backup_data, &data_t.data, BACKUP_DATA_LEN);
+            memcpy((uint8_t*)&backup_data, &data_t.data, sizeof(data_t.data));
             remote_data_head.backup_data_cnt++;
         }
     }
@@ -502,4 +555,44 @@ uint8_t dh_can_cmd_recv_boardcast_backupdata(uint8_t *data, uint8_t ft, uint8_t 
 ERR_DATA_RBB:
      data_t.datalen = INVAULD_LEN_16;
      return 0;
+}
+
+uint8_t dh_can_cmd_backup_data_req(uint8_t* data)
+{
+    uint8_t i, data_pos = 0, checksum = 0;
+    uint16_t len_temp;
+
+    if(data[0] == CAN_CMD_BACKUP_DATA_REQ)
+    {
+        memset(can_data_send_buf, 0, MAX_APP_CAN_DATA_LEN);
+        for(i = 0; i < BACKUP_DATA_LEN; i++)
+        {
+            checksum += backup_data.data[i];
+        }
+
+        if(checksum != backup_data.checksum)
+        {
+            can_data_send_buf[0] = CAN_CMD_BACKUP_DATA_CHECKSUM_ERR;
+            can_data_send_pkg_sum = 1;
+            can_data_send_pkg_cur = 0;
+            return 1;
+        }
+
+        len_temp = sizeof(dh_backup_data_t);
+        memcpy(&can_data_send_buf[data_pos], &len_temp, sizeof(len_temp));
+        data_pos += sizeof(len_temp);
+
+        len_temp = sizeof(backup_data);
+        memcpy(&can_data_send_buf[data_pos], &backup_data, len_temp);
+        data_pos += len_temp;
+
+        can_data_send_pkg_sum = (data_pos-1)/CAN_APP_DATA_UINT_LEN + 1;
+        can_data_send_pkg_cur = 0;
+
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
 }

@@ -8,7 +8,7 @@ extern "C" {
 #include "main.h"
 
 #define MPPT_NUM    (9)
-#define MAX_APP_CAN_DATA_LEN (64)
+#define MAX_APP_CAN_DATA_LEN (128)
 #define CAN_APP_DATA_UINT_LEN   (8)
 
 #define CAN_CMD_REMOTE_WING (0xFD)
@@ -18,6 +18,10 @@ extern "C" {
 #define CAN_CMD_RESET_CAN12 (0xF9)
 #define CAN_CMD_RESET_CAN1  (0xF8)
 #define CAN_CMD_RESET_CAN2  (0xF7)
+
+#define CAN_CMD_BACKUP_DATA_REQ  (0xF5)
+#define CAN_CMD_BACKUP_DATA_CHECKSUM_ERR  (0xEE)
+
 #define BACKUP_DATA_LEN (96)
 #define INVAULD_LEN_16  (0xffff)
 
@@ -205,9 +209,14 @@ typedef struct
 
 typedef struct
 {
-    uint16_t datalen;
     uint8_t data[BACKUP_DATA_LEN];
     uint8_t checksum;
+}dh_backup_data_t;
+
+typedef struct
+{
+    uint16_t datalen;
+    dh_backup_data_t data;
 }dh_can_backup_data_t;
 
 #pragma pack()

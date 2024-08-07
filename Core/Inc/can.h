@@ -75,6 +75,7 @@ typedef enum
   CAN_ID_DT_BOARDCAST_PATH = 0x11,
   CAN_ID_DT_BOARDCAST_POSTURE = 0x13,
   CAN_ID_DT_BOARDCAST_BACKUP_DATA = 0x14,
+  CAN_ID_DT_INVALID = 0xff,
 }dh_can_dt_t;
 
 typedef enum
