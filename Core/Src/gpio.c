@@ -25,7 +25,8 @@
 dh_gpio_struct_t dh_gpio_struct[GPIO_PLUSE_CTL_NUM] = 
 {
 	//pluse
-  MPPT1_DRT_GPIO_Port, MPPT1_DRT_Pin,
+  //MPPT1_DRT_GPIO_Port, MPPT1_DRT_Pin,
+  MPPT_12V_TEST_GPIO_Port, MPPT_12V_TEST_Pin,
   MPPT1_ON_GPIO_Port, MPPT1_ON_Pin,
   MPPT2_DRT_GPIO_Port, MPPT2_DRT_Pin,
   MPPT2_ON_GPIO_Port, MPPT2_ON_Pin,
@@ -52,7 +53,7 @@ dh_gpio_struct_t dh_gpio_level[GPIO_LEVEL_CTL_NUM] =
   VCHARGE_GEAR1_GPIO_Port, VCHARGE_GEAR1_Pin,
 };
 
-uint8_t gpio_delay_us_flag[GPIO_PLUSE_CTL_NUM] = {0};//Ô½½ç±êÖ¾
+uint8_t gpio_delay_us_flag[GPIO_PLUSE_CTL_NUM] = {0};//è¶Šç•Œæ ‡å¿—
 uint32_t gpio_delay_us[GPIO_PLUSE_CTL_NUM] = {0};
 
 /* USER CODE END 0 */
@@ -70,7 +71,7 @@ void dh_gpio_1pluse(uint16_t ms, uint16_t gpio_num)
     gpio_delay_us[gpio_num] = HAL_GetTick()  + ms * 1000;
     if(gpio_delay_us[gpio_num] < HAL_GetTick())
     {
-      gpio_delay_us_flag[gpio_num] = 1;//Ô½½ç
+      gpio_delay_us_flag[gpio_num] = 1;//è¶Šç•Œ
     }
   }
 }
@@ -105,7 +106,7 @@ void dh_gpio_main_process(void)
       }
       else
       {
-        //Ô½½çÁË
+        //è¶Šç•Œäº†
         if(HAL_GetTick() < gpio_delay_us[i])
         {
           gpio_delay_us_flag[i] = 0;
@@ -165,6 +166,9 @@ void MX_GPIO_Init(void)
   LL_GPIO_ResetOutputPin(GPIOF, MPPT8_DRT_Pin|MPPT9_DRT_Pin|MPPT1_ON_Pin|MPPT2_ON_Pin
                           |MPPT3_ON_Pin|MPPT4_ON_Pin|MPPT5_ON_Pin|MPPT6_ON_Pin
                           |MPPT7_ON_Pin|MPPT8_ON_Pin|MPPT9_ON_Pin);
+
+  /**/
+  LL_GPIO_ResetOutputPin(MPPT_12V_TEST_GPIO_Port, MPPT_12V_TEST_Pin);
 
   /**/
   GPIO_InitStruct.Pin = VCHARGE_GEAR1_Pin|MPPT1_DRT_Pin|MPPT2_DRT_Pin|MPPT3_DRT_Pin
@@ -234,9 +238,9 @@ void MX_GPIO_Init(void)
 
   /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_0|LL_GPIO_PIN_1|LL_GPIO_PIN_2|LL_GPIO_PIN_3
-                          |LL_GPIO_PIN_4|LL_GPIO_PIN_5|LL_GPIO_PIN_6|LL_GPIO_PIN_7
-                          |LL_GPIO_PIN_8|LL_GPIO_PIN_9|LL_GPIO_PIN_10|LL_GPIO_PIN_11
-                          |LL_GPIO_PIN_12|LL_GPIO_PIN_13|LL_GPIO_PIN_14|LL_GPIO_PIN_15;
+                          |LL_GPIO_PIN_4|LL_GPIO_PIN_5|LL_GPIO_PIN_6|LL_GPIO_PIN_8
+                          |LL_GPIO_PIN_9|LL_GPIO_PIN_10|LL_GPIO_PIN_11|LL_GPIO_PIN_12
+                          |LL_GPIO_PIN_13|LL_GPIO_PIN_14|LL_GPIO_PIN_15;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOG, &GPIO_InitStruct);
@@ -257,6 +261,14 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /**/
+  GPIO_InitStruct.Pin = MPPT_12V_TEST_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(MPPT_12V_TEST_GPIO_Port, &GPIO_InitStruct);
 
 }
 

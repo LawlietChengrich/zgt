@@ -111,6 +111,8 @@ void Error_Handler(void);
 #define MPPT1_ST_GPIO_Port GPIOA
 #define MPPT1_I_Pin LL_GPIO_PIN_3
 #define MPPT1_I_GPIO_Port GPIOA
+#define MPPT_12V_TEST_Pin LL_GPIO_PIN_7
+#define MPPT_12V_TEST_GPIO_Port GPIOG
 #define VCHARGE_GEAR0_Pin LL_GPIO_PIN_1
 #define VCHARGE_GEAR0_GPIO_Port GPIOE
 /* USER CODE BEGIN Private defines */
