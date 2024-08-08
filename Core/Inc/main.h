@@ -116,6 +116,7 @@ void Error_Handler(void);
 #define VCHARGE_GEAR0_Pin LL_GPIO_PIN_1
 #define VCHARGE_GEAR0_GPIO_Port GPIOE
 /* USER CODE BEGIN Private defines */
+#define SYSTICK_HANDLE_US   (10)
 
 /* USER CODE END Private defines */
 

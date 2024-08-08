@@ -94,7 +94,7 @@ int main(void)
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 
-	SysTick_Config(SystemCoreClock / 1000000);//SysTick_Handler 1us 
+	SysTick_Config(SystemCoreClock / (1000000/SYSTICK_HANDLE_US));//SysTick_Handler 10us 
   /* USER CODE END 2 */
 
   /* Infinite loop */
