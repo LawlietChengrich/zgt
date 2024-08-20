@@ -153,8 +153,8 @@ typedef struct
 
 typedef struct
 {
-    uint8_t correct_cnt:4;
     uint8_t error_cnt:4;
+    uint8_t correct_cnt:4;
 }bit_union_cmd_cnt_t;
 
 #pragma pack(1)
