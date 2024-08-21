@@ -53,7 +53,7 @@ dh_gpio_struct_t dh_gpio_level[GPIO_LEVEL_CTL_NUM] =
   VCHARGE_GEAR1_GPIO_Port, VCHARGE_GEAR1_Pin,
 };
 
-uint8_t gpio_delay_us_flag[GPIO_PLUSE_CTL_NUM] = {0};//è¶Šç•Œæ ‡å¿—
+uint8_t gpio_delay_us_flag[GPIO_PLUSE_CTL_NUM] = {0};//Ô½½ç±êÖ¾
 uint32_t gpio_delay_us[GPIO_PLUSE_CTL_NUM] = {0};
 
 /* USER CODE END 0 */
@@ -75,7 +75,7 @@ void dh_gpio_1pluse(uint16_t ms, uint16_t gpio_num)
     gpio_delay_us[gpio_num] = HAL_GetTick()  + ms * (1000/SYSTICK_HANDLE_US);
     if(gpio_delay_us[gpio_num] < HAL_GetTick())
     {
-      gpio_delay_us_flag[gpio_num] = 1;//è¶Šç•Œ
+      gpio_delay_us_flag[gpio_num] = 1;//Ô½½ç
     }
   }
 }
@@ -114,7 +114,7 @@ void dh_gpio_main_process(void)
       }
       else
       {
-        //è¶Šç•Œäº†
+        //Ô½½çÁË
         if(HAL_GetTick() < gpio_delay_us[i])
         {
           gpio_delay_us_flag[i] = 0;
@@ -138,6 +138,7 @@ void dh_gpio_main_process(void)
 void MX_GPIO_Init(void)
 {
 
+  LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
   LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
@@ -152,10 +153,10 @@ void MX_GPIO_Init(void)
 
   /**/
   LL_GPIO_ResetOutputPin(GPIOE, VCHARGE_GEAR1_Pin|MPPT1_DRT_Pin|MPPT2_DRT_Pin|MPPT3_DRT_Pin
-                          |MPPT4_DRT_Pin|VCHARGE_GEAR0_Pin);
+                          |MPPT4_DRT_Pin|MPPT5_DRT_Pin|VCHARGE_GEAR0_Pin);
 
   /**/
-  LL_GPIO_ResetOutputPin(GPIOC, MPPT5_DRT_Pin|MPPT6_DRT_Pin|MPPT7_DRT_Pin);
+  LL_GPIO_ResetOutputPin(GPIOC, MPPT6_DRT_Pin|MPPT7_DRT_Pin);
 
   /**/
   LL_GPIO_ResetOutputPin(GPIOF, MPPT8_DRT_Pin|MPPT9_DRT_Pin|MPPT1_ON_Pin|MPPT2_ON_Pin
@@ -167,7 +168,7 @@ void MX_GPIO_Init(void)
 
   /**/
   GPIO_InitStruct.Pin = VCHARGE_GEAR1_Pin|MPPT1_DRT_Pin|MPPT2_DRT_Pin|MPPT3_DRT_Pin
-                          |MPPT4_DRT_Pin|VCHARGE_GEAR0_Pin;
+                          |MPPT4_DRT_Pin|MPPT5_DRT_Pin|VCHARGE_GEAR0_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
@@ -175,7 +176,7 @@ void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = MPPT5_DRT_Pin|MPPT6_DRT_Pin|MPPT7_DRT_Pin;
+  GPIO_InitStruct.Pin = MPPT6_DRT_Pin|MPPT7_DRT_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
@@ -243,7 +244,7 @@ void MX_GPIO_Init(void)
   /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_7|LL_GPIO_PIN_8|LL_GPIO_PIN_9|LL_GPIO_PIN_10
                           |LL_GPIO_PIN_11|LL_GPIO_PIN_12|LL_GPIO_PIN_13|LL_GPIO_PIN_14
-                          |LL_GPIO_PIN_15|LL_GPIO_PIN_0;
+                          |LL_GPIO_PIN_15;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOE, &GPIO_InitStruct);
@@ -264,6 +265,26 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(MPPT_12V_TEST_GPIO_Port, &GPIO_InitStruct);
+
+  /**/
+  LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTC, LL_SYSCFG_EXTI_LINE13);
+
+  /**/
+  EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_13;
+  EXTI_InitStruct.LineCommand = ENABLE;
+  EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
+  EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_FALLING;
+  LL_EXTI_Init(&EXTI_InitStruct);
+
+  /**/
+  LL_GPIO_SetPinPull(GPIOC, LL_GPIO_PIN_13, LL_GPIO_PULL_NO);
+
+  /**/
+  LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_13, LL_GPIO_MODE_INPUT);
+
+  /* EXTI interrupt init*/
+  NVIC_SetPriority(EXTI15_10_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+  NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
 
