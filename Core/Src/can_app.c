@@ -532,11 +532,11 @@ uint8_t dh_can_cmd_recv_boardcast_backupdata(uint8_t *data, uint8_t ft, uint8_t 
 
     if(data_t.datalen == 0)
     {
-        data_t.datalen = INVAULD_LEN_16;
         len_temp  = sizeof(data_t.datalen);
-        for(i = 0; i < BACKUP_DATA_LEN; i++)
+		data_t.datalen = BACKUP_DATA_LEN + 1;
+        for(i = 0; i < (BACKUP_DATA_LEN + len_temp); i++)
         {
-            checksum += *(p+i+len_temp);
+            checksum += *(p+i);
         }
 
         if(checksum != data_t.data.checksum)
@@ -547,6 +547,7 @@ uint8_t dh_can_cmd_recv_boardcast_backupdata(uint8_t *data, uint8_t ft, uint8_t 
         {
             memcpy((uint8_t*)&backup_data, &data_t.data, sizeof(data_t.data));
             remote_data_head.backup_data_cnt++;
+			data_t.datalen = INVAULD_LEN_16;
         }
     }
 
@@ -565,6 +566,7 @@ uint8_t dh_can_cmd_backup_data_req(uint8_t* data)
     if(data[0] == CAN_CMD_BACKUP_DATA_REQ)
     {
         memset(can_data_send_buf, 0, MAX_APP_CAN_DATA_LEN);
+				checksum = BACKUP_DATA_LEN + 1;
         for(i = 0; i < BACKUP_DATA_LEN; i++)
         {
             checksum += backup_data.data[i];
