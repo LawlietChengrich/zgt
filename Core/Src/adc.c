@@ -22,7 +22,6 @@
 
 /* USER CODE BEGIN 0 */
 void dh_cal_adcvalue_aver(void);
-void dh_adc_dma_transfer_finish(DMA_HandleTypeDef *DmaHandle);
 
 __IO uint16_t ADC_ConvertedValue[MAX_ADC_CHN_NUM];
 volatile uint16_t adc_value_aver[MAX_ADC_CHN_NUM];

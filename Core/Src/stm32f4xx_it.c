@@ -61,7 +61,8 @@ extern CAN_HandleTypeDef hcan2;
 /* USER CODE BEGIN EV */
 void dh_gpio_1pluse(uint16_t ms, uint16_t gpio_num);
 //extern uint32_t gpio_delay_ms[2];
-extern uint32_t gpio_delay_us[2];
+extern uint32_t gpio_delay_us[GPIO_PLUSE_CTL_NUM];
+uint32_t flag1ms = 0;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -188,7 +189,7 @@ void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
 
-
+  flag1ms = 0xffffffff;
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */

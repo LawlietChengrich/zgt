@@ -21,6 +21,7 @@
 #include "adc.h"
 #include "can.h"
 #include "dma.h"
+#include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -89,6 +90,7 @@ int main(void)
   MX_CAN2_Init();
   MX_DMA_Init();
   MX_ADC1_Init();
+  MX_TIM7_Init();
 
   /* Initialize interrupts */
   MX_NVIC_Init();
@@ -107,9 +109,11 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     //LL_mDelay(500);
-		dh_gpio_main_process();
-    dh_can_data_send_process();
-		running++;
+	dh_gpio_main_process();
+	dh_can_data_send_process();
+	running++;
+	//dh_timer_us_block_delay(5);
+	//HAL_GPIO_TogglePin(MPPT1_ON_GPIO_Port, MPPT1_ON_Pin);
   }
   /* USER CODE END 3 */
 }

@@ -42,7 +42,7 @@
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-
+extern uint32_t flag1ms;
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

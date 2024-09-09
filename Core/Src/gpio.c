@@ -22,6 +22,8 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN 0 */
+#include "stm32f4xx_it.h"
+
 dh_gpio_struct_t dh_gpio_struct[GPIO_PLUSE_CTL_NUM] = 
 {
 	//pluse
@@ -53,9 +55,7 @@ dh_gpio_struct_t dh_gpio_level[GPIO_LEVEL_CTL_NUM] =
   VCHARGE_GEAR1_GPIO_Port, VCHARGE_GEAR1_Pin,
 };
 
-uint8_t gpio_delay_us_flag[GPIO_PLUSE_CTL_NUM] = {0};//越界标志
 uint32_t gpio_delay_us[GPIO_PLUSE_CTL_NUM] = {0};
-
 /* USER CODE END 0 */
 
 /*----------------------------------------------------------------------------*/
@@ -72,11 +72,7 @@ void dh_gpio_1pluse(uint16_t ms, uint16_t gpio_num)
 #else
     LL_GPIO_SetOutputPin(dh_gpio_struct[gpio_num].group, dh_gpio_struct[gpio_num].pin);
 #endif
-    gpio_delay_us[gpio_num] = HAL_GetTick()  + ms * (1000/SYSTICK_HANDLE_US);
-    if(gpio_delay_us[gpio_num] < HAL_GetTick())
-    {
-      gpio_delay_us_flag[gpio_num] = 1;//越界
-    }
+    gpio_delay_us[gpio_num] = ms;
   }
 }
 
@@ -100,26 +96,20 @@ void dh_gpio_main_process(void)
   {
     if(gpio_delay_us[i] !=  0)
     {
-      if(gpio_delay_us_flag[i] == 0)
+      if(flag1ms & (1 << i))
       {
-        if(HAL_GetTick() > gpio_delay_us[i])
-        {
+        flag1ms &= ~((1 << i));
+			  gpio_delay_us[i]--;
+      }
+			
+			if(gpio_delay_us[i] == 0)
+			{
 #if PLUSE_LOW_TO_HIGH
-            LL_GPIO_SetOutputPin(dh_gpio_struct[i].group, dh_gpio_struct[i].pin);
+        LL_GPIO_SetOutputPin(dh_gpio_struct[i].group, dh_gpio_struct[i].pin);
 #else
-            LL_GPIO_ResetOutputPin(dh_gpio_struct[i].group, dh_gpio_struct[i].pin);
+        LL_GPIO_ResetOutputPin(dh_gpio_struct[i].group, dh_gpio_struct[i].pin);
 #endif
-            gpio_delay_us[i] = 0;
-        }
-      }
-      else
-      {
-        //越界了
-        if(HAL_GetTick() < gpio_delay_us[i])
-        {
-          gpio_delay_us_flag[i] = 0;
-        }
-      }
+			}
     }
   }
 }
@@ -184,14 +174,22 @@ void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = MPPT8_DRT_Pin|MPPT9_DRT_Pin|MPPT1_ON_Pin|MPPT2_ON_Pin
-                          |MPPT3_ON_Pin|MPPT4_ON_Pin|MPPT5_ON_Pin|MPPT6_ON_Pin
-                          |MPPT7_ON_Pin|MPPT8_ON_Pin|MPPT9_ON_Pin;
+  GPIO_InitStruct.Pin = MPPT8_DRT_Pin|MPPT9_DRT_Pin|MPPT2_ON_Pin|MPPT3_ON_Pin
+                          |MPPT4_ON_Pin|MPPT5_ON_Pin|MPPT6_ON_Pin|MPPT7_ON_Pin
+                          |MPPT8_ON_Pin|MPPT9_ON_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+
+  /**/
+  GPIO_InitStruct.Pin = MPPT1_ON_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(MPPT1_ON_GPIO_Port, &GPIO_InitStruct);
 
   /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_0|LL_GPIO_PIN_1|LL_GPIO_PIN_2|LL_GPIO_PIN_3
