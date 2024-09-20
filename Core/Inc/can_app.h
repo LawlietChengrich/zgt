@@ -11,6 +11,7 @@ extern "C" {
 #define MAX_APP_CAN_DATA_LEN (128)
 #define CAN_APP_DATA_UINT_LEN   (8)
 
+#define CAN_CMD_REMOTE_TEMP (0xFC)
 #define CAN_CMD_REMOTE_WING (0xFD)
 #define CAN_CMD_REMOTE_BAT  (0xFE)
 #define CAN_CMD_REMOTE_MPPT (0xFF)
@@ -197,6 +198,11 @@ typedef struct
     bit_union_wing1_t status1;
     bit_union_wing2_t status2;
 }dh_can_wing_inf_t;
+
+typedef struct
+{
+    dh_can_ui_t temp[13];
+}dh_can_temp_inf_t;
 
 typedef struct
 {

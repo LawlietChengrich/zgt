@@ -11,6 +11,7 @@ uint8_t dh_can_cmd_can_reset(uint8_t* data);
 void dh_can_cmd_mppt_get(void);
 void dh_can_cmd_bat_get(void);
 void dh_can_cmd_wing_get(void);
+void dh_can_cmd_temp_get(void);
 
 uint8_t dh_can_cmd_short(uint8_t* data);
 uint8_t dh_can_cmd_mppt_ctrl(dh_can_cmd_mppt_t cmd);
@@ -130,6 +131,9 @@ uint8_t dh_can_cmd_remote_req(uint8_t* data)
     uint8_t ret = 1;
     switch (data[0])
     {
+        case CAN_CMD_REMOTE_TEMP:
+            dh_can_cmd_temp_get();
+            break;
         case CAN_CMD_REMOTE_WING:
             dh_can_cmd_wing_get();
             break;
@@ -267,9 +271,9 @@ void dh_can_cmd_bat_get(void)
     bat_data.bus_u.data_z = 33 * adc_value_aver[0] / 40950;//计算整数部分;
     bat_data.bus_u.data_f = ((33 * adc_value_aver[0]) % 40950)*100/40950;//计算小数部分
 
-    bat_data.bat_u.data_z = 33 * adc_value_aver[1] / 40950;//计算整数部分;
-    bat_data.bat_u.data_f = ((33 * adc_value_aver[1]) % 40950)*100/40950;//计算小数部分
-
+    bat_data.bat_i.data_z = 33 * adc_value_aver[1] / 40950;//计算整数部分;
+    bat_data.bat_i.data_f = ((33 * adc_value_aver[1]) % 40950)*100/40950;//计算小数部分
+		
     bat_data.load_i_sum.data_z = 33 * adc_value_aver[0] / 40950;//计算整数部分;
     bat_data.load_i_sum.data_f = ((33 * adc_value_aver[0]) % 40950)*100/40950;//计算小数部分
 
@@ -349,6 +353,53 @@ void dh_can_cmd_wing_get(void)
 
     can_data_send_pkg_sum = (data_pos - 1)/CAN_APP_DATA_UINT_LEN + 1;
     can_data_send_pkg_cur = 0;    
+}
+
+
+void dh_can_cmd_temp_get(void)
+{
+	uint8_t i, data_pos = 0;
+    uint16_t data_len = 0, len_temp;
+    uint32_t checksum = 0;
+    dh_can_temp_inf_t temp_data = {0};
+
+    memset(can_data_send_buf, 0, MAX_APP_CAN_DATA_LEN);
+
+    data_pos += sizeof(data_len);
+    len_temp = sizeof(remote_data_head);
+    remote_data_head.tmt = CAN_CMD_REMOTE_TEMP;
+    remote_data_head.remote_cmd_cnt++;
+    memcpy(&can_data_send_buf[data_pos], &remote_data_head, len_temp);
+    data_pos += len_temp;
+
+    len_temp = sizeof(temp_data);
+    temp_data.temp[0].data_z = (uint8_t)-12;
+    temp_data.temp[0].data_f = (uint8_t)-34;
+    temp_data.temp[1].data_z = 12;
+    temp_data.temp[1].data_f = 4;
+		temp_data.temp[10].data_z = 0;
+    temp_data.temp[10].data_f = 69;
+		temp_data.temp[12].data_z = 0;
+    temp_data.temp[12].data_f = (uint8_t)-89;
+    memcpy(&can_data_send_buf[data_pos], &temp_data, len_temp);
+    data_pos += len_temp;
+
+    data_pos += 1;//checksum
+
+    len_temp = sizeof(data_len);
+    data_len = data_pos - len_temp;
+    memcpy(&can_data_send_buf[0], &data_len, len_temp);
+
+    checksum += data_len;
+    for(i = len_temp; i < (data_pos-1); i++)
+    {
+        checksum += can_data_send_buf[i];
+    }
+
+    can_data_send_buf[data_pos-1] = checksum&0xFF;
+
+    can_data_send_pkg_sum = (data_pos - 1)/CAN_APP_DATA_UINT_LEN + 1;
+    can_data_send_pkg_cur = 0;
 }
 
 void dh_can_data_send_process(void)
