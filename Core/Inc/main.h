@@ -111,6 +111,8 @@ void Error_Handler(void);
 #define MPPT1_I_GPIO_Port GPIOA
 #define MPPT_12V_TEST_Pin LL_GPIO_PIN_7
 #define MPPT_12V_TEST_GPIO_Port GPIOG
+#define DA_18B20_Pin LL_GPIO_PIN_9
+#define DA_18B20_GPIO_Port GPIOB
 #define MPPT5_DRT_Pin LL_GPIO_PIN_0
 #define MPPT5_DRT_GPIO_Port GPIOE
 #define VCHARGE_GEAR0_Pin LL_GPIO_PIN_1

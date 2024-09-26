@@ -27,6 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "can_app.h"
+#include "temperature.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -91,12 +92,14 @@ int main(void)
   MX_DMA_Init();
   MX_ADC1_Init();
   MX_TIM7_Init();
+  MX_TIM6_Init();
 
   /* Initialize interrupts */
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 
 	SysTick_Config(SystemCoreClock / (1000000/SYSTICK_HANDLE_US));//SysTick_Handler 10us 
+  DS18B20_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -111,7 +114,8 @@ int main(void)
     //LL_mDelay(500);
 	dh_gpio_main_process();
 	dh_can_data_send_process();
-	running++;
+		dh_ds18b20_process();
+		running++;
 	//dh_timer_us_block_delay(5);
 	//HAL_GPIO_TogglePin(MPPT1_ON_GPIO_Port, MPPT1_ON_Pin);
   }

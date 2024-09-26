@@ -157,6 +157,9 @@ void MX_GPIO_Init(void)
   LL_GPIO_ResetOutputPin(MPPT_12V_TEST_GPIO_Port, MPPT_12V_TEST_Pin);
 
   /**/
+  LL_GPIO_ResetOutputPin(DA_18B20_GPIO_Port, DA_18B20_Pin);
+
+  /**/
   GPIO_InitStruct.Pin = VCHARGE_GEAR1_Pin|MPPT1_DRT_Pin|MPPT2_DRT_Pin|MPPT3_DRT_Pin
                           |MPPT4_DRT_Pin|MPPT5_DRT_Pin|VCHARGE_GEAR0_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
@@ -218,7 +221,7 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = LL_GPIO_PIN_0|LL_GPIO_PIN_1|LL_GPIO_PIN_2|LL_GPIO_PIN_10
                           |LL_GPIO_PIN_11|LL_GPIO_PIN_14|LL_GPIO_PIN_15|LL_GPIO_PIN_3
                           |LL_GPIO_PIN_4|LL_GPIO_PIN_5|LL_GPIO_PIN_6|LL_GPIO_PIN_7
-                          |LL_GPIO_PIN_8|LL_GPIO_PIN_9;
+                          |LL_GPIO_PIN_8;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -263,6 +266,14 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(MPPT_12V_TEST_GPIO_Port, &GPIO_InitStruct);
+
+  /**/
+  GPIO_InitStruct.Pin = DA_18B20_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(DA_18B20_GPIO_Port, &GPIO_InitStruct);
 
   /**/
   LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTC, LL_SYSCFG_EXTI_LINE13);
