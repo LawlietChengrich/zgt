@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "gpio.h"
 #include "adc.h"
+#include "can_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
