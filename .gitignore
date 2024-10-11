@@ -1,4 +1,4 @@
-/*.mxproject
+/app/*.mxproject
 *.d
 *.o
 *.crf
@@ -7,9 +7,9 @@
 *.hex
 *.htm
 *.map
-/MDK-ARM/DebugConfig/stm32_zg_test_STM32F407ZGTx.dbgconf
-/MDK-ARM/stm32_zg_test
-/MDK-ARM/*.scvd
-/MDK-ARM/*.lst
-/MDK-ARM/stm32_zg_test.uvguix.rs0845
-/MDK-ARM/stm32_zg_test.uvoptx
+/app/MDK-ARM/DebugConfig/stm32_zg_test_STM32F407ZGTx.dbgconf
+/app/MDK-ARM/stm32_zg_test
+/app/MDK-ARM/*.scvd
+/app/MDK-ARM/*.lst
+/app/MDK-ARM/*.uvguix*
+/app/MDK-ARM/stm32_zg_test.uvoptx
