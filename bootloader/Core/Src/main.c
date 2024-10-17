@@ -18,20 +18,30 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "adc.h"
-#include "can.h"
-#include "dma.h"
-#include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "can_app.h"
-#include "temperature.h"
+#define FLASH_APP_MAIN_ADDR	(0x08020000)
+#define FLASH_APP_MAIN_SIZE	(128 * 1024)
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+void Jump_to_func_over(void)
+{
+  uint32_t JumpAddress;
+  typedef void (*pFunction)(void);
+  pFunction Jump_To_Application;
+
+  __set_PRIMASK(1);
+  __set_FAULTMASK(1);
+
+  JumpAddress = *(volatile uint32_t*) (FLASH_APP_MAIN_ADDR + 4);//FLASH_FUNC_ADDR???????????????
+  Jump_To_Application = (pFunction) JumpAddress;
+  Jump_To_Application();
+}
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -46,19 +56,18 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-void vector_table_relocate(void);
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t running = 0;
+
 /* USER CODE END 0 */
 
 /**
@@ -68,13 +77,19 @@ uint8_t running = 0;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	//vector_table_relocate();
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+
+  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
+  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
+
+  NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
+
+  /* System interrupt init*/
 
   /* USER CODE BEGIN Init */
 
@@ -89,39 +104,17 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_CAN2_Init();
-  MX_DMA_Init();
-  MX_ADC1_Init();
-  MX_TIM7_Init();
-  MX_TIM6_Init();
-
-  /* Initialize interrupts */
-  MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
-
-	SysTick_Config(SystemCoreClock / (1000000/SYSTICK_HANDLE_US));//SysTick_Handler 10us 
-  DS18B20_Init();
-#if defined (STM32_BUILD)
-	vector_table_relocate();
-#endif
+	Jump_to_func_over();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-		//LL_mDelay(500);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    //LL_mDelay(500);
-	dh_gpio_main_process();
-	dh_can_data_send_process();
-		dh_ds18b20_process();
-		running++;
-	//dh_timer_us_block_delay(5);
-	//HAL_GPIO_TogglePin(MPPT1_ON_GPIO_Port, MPPT1_ON_Pin);
   }
   /* USER CODE END 3 */
 }
@@ -137,14 +130,15 @@ void SystemClock_Config(void)
   {
   }
   LL_PWR_SetRegulVoltageScaling(LL_PWR_REGU_VOLTAGE_SCALE1);
-  LL_RCC_HSE_Enable();
+  LL_RCC_HSI_SetCalibTrimming(16);
+  LL_RCC_HSI_Enable();
 
-   /* Wait till HSE is ready */
-  while(LL_RCC_HSE_IsReady() != 1)
+   /* Wait till HSI is ready */
+  while(LL_RCC_HSI_IsReady() != 1)
   {
 
   }
-  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLM_DIV_25, 168, LL_RCC_PLLP_DIV_2);
+  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSI, LL_RCC_PLLM_DIV_8, 84, LL_RCC_PLLP_DIV_2);
   LL_RCC_PLL_Enable();
 
    /* Wait till PLL is ready */
@@ -162,33 +156,11 @@ void SystemClock_Config(void)
   {
 
   }
+  LL_Init1msTick(84000000);
   LL_SetSystemCoreClock(84000000);
-
-   /* Update the time base */
-  if (HAL_InitTick (TICK_INT_PRIORITY) != HAL_OK)
-  {
-    Error_Handler();
-  }
-}
-
-/**
-  * @brief NVIC Configuration.
-  * @retval None
-  */
-static void MX_NVIC_Init(void)
-{
-  /* CAN2_RX1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(CAN2_RX1_IRQn, 2, 0);
-  HAL_NVIC_EnableIRQ(CAN2_RX1_IRQn);
 }
 
 /* USER CODE BEGIN 4 */
-void vector_table_relocate(void)
-{
-	SCB->VTOR=FLASH_BASE|0x40000U;
-	__set_PRIMASK(0);
-	__set_FAULTMASK(0);
-}
 
 /* USER CODE END 4 */
 

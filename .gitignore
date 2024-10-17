@@ -1,4 +1,5 @@
 /app/*.mxproject
+/bootloader/*.mxproject
 *.d
 *.o
 *.crf
@@ -13,3 +14,9 @@
 /app/MDK-ARM/*.lst
 /app/MDK-ARM/*.uvguix*
 /app/MDK-ARM/stm32_zg_test.uvoptx
+/bootloader/MDK-ARM/DebugConfig/g60_fireboard_bl_STM32F407ZGTx.dbgconf
+/bootloader/MDK-ARM/g60_fireboard_bl
+/bootloader/MDK-ARM/*.scvd
+/bootloader/MDK-ARM/*.lst
+/bootloader/MDK-ARM/*.uvguix*
+/bootloader/MDK-ARM/g60_fireboard_bl.uvoptx
