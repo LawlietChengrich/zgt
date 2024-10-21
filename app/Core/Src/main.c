@@ -28,6 +28,7 @@
 /* USER CODE BEGIN Includes */
 #include "can_app.h"
 #include "temperature.h"
+#include "flash.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -185,7 +186,7 @@ static void MX_NVIC_Init(void)
 /* USER CODE BEGIN 4 */
 void vector_table_relocate(void)
 {
-	SCB->VTOR=FLASH_BASE|0x40000U;
+	SCB->VTOR=FLASH_BASE|(FLASH_APP_MAIN_ADDR - FLASH_BL_ADDR);
 	__set_PRIMASK(0);
 	__set_FAULTMASK(0);
 }

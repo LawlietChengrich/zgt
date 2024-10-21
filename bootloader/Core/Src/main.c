@@ -18,30 +18,17 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "can.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#define FLASH_APP_MAIN_ADDR	(0x08020000)
-#define FLASH_APP_MAIN_SIZE	(128 * 1024)
-
+#include "boot.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-void Jump_to_func_over(void)
-{
-  uint32_t JumpAddress;
-  typedef void (*pFunction)(void);
-  pFunction Jump_To_Application;
 
-  __set_PRIMASK(1);
-  __set_FAULTMASK(1);
-
-  JumpAddress = *(volatile uint32_t*) (FLASH_APP_MAIN_ADDR + 4);//FLASH_FUNC_ADDR???????????????
-  Jump_To_Application = (pFunction) JumpAddress;
-  Jump_To_Application();
-}
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -83,13 +70,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
-  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
-
-  NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
-
-  /* System interrupt init*/
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -104,8 +85,9 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_CAN2_Init();
   /* USER CODE BEGIN 2 */
-	Jump_to_func_over();
+	dh_bootup_process_retry();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -156,8 +138,13 @@ void SystemClock_Config(void)
   {
 
   }
-  LL_Init1msTick(84000000);
   LL_SetSystemCoreClock(84000000);
+
+   /* Update the time base */
+  if (HAL_InitTick (TICK_INT_PRIORITY) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /* USER CODE BEGIN 4 */

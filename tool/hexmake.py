@@ -1,7 +1,7 @@
 '''
 ----------------------------------------------------------------------------------------------------
 
-									hexmake
+									hexmake.py
 									bootloader hex + app hex
 									= all hex
 
@@ -40,10 +40,19 @@ class Convertor:
 	def __init__(self):
 		self.set = Settings()
 		self.bootloader_flash_src_len = 0
-		self.bootloader_flash_checksum16 = 0
+		self.bootloader_flash_checksum = 0
 		self.app_flash_src_len = 0
-		self.app_flash_checksum16 = 0
+		self.app_flash_checksum = 0
 		self.hex_file_len = 0
+	
+	def endian_change(self, value):
+		change_value = 0
+		change_value |= (value & 0xff) << 24
+		change_value |= (value & 0xff00) << 8
+		change_value |= (value & 0xff0000) >> 8
+		change_value |= (value & 0xff000000) >>24
+
+		return change_value
 
 	def readHexFile(self, file_bootloader, file_app):
 		retArray = []
@@ -61,7 +70,7 @@ class Convertor:
 					line_data_len = int(line[POSITION_DATA_LEN:(POSITION_DATA_LEN+2)],16)
 					self.bootloader_flash_src_len += line_data_len
 					for i in range(line_data_len):
-						self.bootloader_flash_checksum16 += int(line[(POSITION_DATA+2*i):(POSITION_DATA+2*(i+1))],16)
+						self.bootloader_flash_checksum += int(line[(POSITION_DATA+2*i):(POSITION_DATA+2*(i+1))],16)
 
 					if line_data_len < MAX_LINE_DATA_LEN:
 						insert_posi = POSITION_DATA + 2*line_data_len
@@ -73,7 +82,7 @@ class Convertor:
 				retArray.append(line)
 				self.hex_file_len += len(line)
 
-			self.bootloader_flash_checksum16 = self.bootloader_flash_checksum16 & 0xffffffff
+			self.bootloader_flash_checksum = self.bootloader_flash_checksum & 0xffffffff
 		except:
 			print('Can not open the \"{}\" file!'.format(file_bootloader))
 			import sys
@@ -110,7 +119,7 @@ class Convertor:
 							#line_data_len = int(line[POSITION_DATA_LEN:(POSITION_DATA_LEN+2)],16)
 							self.app_flash_src_len += line_data_len
 							for i in range(line_data_len):
-								self.app_flash_checksum16 += int(line[(POSITION_DATA+2*i):(POSITION_DATA+2*(i+1))],16)
+								self.app_flash_checksum += int(line[(POSITION_DATA+2*i):(POSITION_DATA+2*(i+1))],16)
 
 						if line_data_len < MAX_LINE_DATA_LEN:
 							insert_posi = POSITION_DATA + 2*line_data_len
@@ -123,7 +132,7 @@ class Convertor:
 					app_data_array.append(line)
 					self.hex_file_len += len(line)
 
-			self.app_flash_checksum16 = self.app_flash_checksum16 & 0xffffffff
+			self.app_flash_checksum = self.app_flash_checksum & 0xffffffff
 
 		except:
 			print('Can not open the \"{}\" file!'.format(file_app))
@@ -142,10 +151,16 @@ class Convertor:
 		flash_src_inf = flash_src_inf  + '%02X'% line_checksum + '\n'
 
 		#bootloader size , 4字节， bootloader 校验和，4字节
+
+		self.bootloader_flash_src_len = self.endian_change(self.bootloader_flash_src_len)
+		self.bootloader_flash_checksum = self.endian_change(self.bootloader_flash_checksum)
+		self.app_flash_src_len = self.endian_change(self.app_flash_src_len)
+		self.app_flash_checksum = self.endian_change(self.app_flash_checksum)
+
 		line_checksum = 0
 		line_checksum_str = ':%02x'%MAX_LINE_DATA_LEN + ADDRESS_BOOTLOADER_INF[4:8] + CMD_DATA_REC + \
-							'%08X'% self.bootloader_flash_src_len + '%08X'% self.bootloader_flash_checksum16 + \
-							'%08X'% self.app_flash_src_len + '%08X'% self.app_flash_checksum16
+							'%08X'% self.bootloader_flash_src_len + '%08X'% self.bootloader_flash_checksum + \
+							'%08X'% self.app_flash_src_len + '%08X'% self.app_flash_checksum
 		for i in range(int((len(line_checksum_str)-1)/2)):
 			line_checksum += int(line_checksum_str[POSITION_DATA_LEN+2*i:POSITION_DATA_LEN+2*(i+1)],16)
 
