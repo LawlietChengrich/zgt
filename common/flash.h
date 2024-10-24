@@ -38,15 +38,23 @@
 	
 #define FLASH_APP_MAIN_ADDR	    FLASH_SEC_ADDR_5
 #define FLASH_APP_MAIN_SIZE	    FLASH_SEC_SIZE_5
-	
+
+#define APP_INF_OFFECT          (1024)
+
 #define FLASH_APP_BK0_ADDR	    FLASH_SEC_ADDR_6
 #define FLASH_APP_BK0_SIZE	    FLASH_SEC_SIZE_6
+#define FLASH_APP_INF0_ADDR     (FLASH_APP_BK0_ADDR + FLASH_APP_BK0_SIZE - APP_INF_OFFECT)
 	
 #define FLASH_APP_BK1_ADDR	    FLASH_SEC_ADDR_7
 #define FLASH_APP_BK1_SIZE	    FLASH_SEC_SIZE_7
-	
+#define FLASH_APP_INF1_ADDR     (FLASH_APP_BK1_ADDR + FLASH_APP_BK1_SIZE - APP_INF_OFFECT)
+
 #define FLASH_APP_BK2_ADDR	    FLASH_SEC_ADDR_8
 #define FLASH_APP_BK2_SIZE	    FLASH_SEC_SIZE_8
+#define FLASH_APP_INF2_ADDR     (FLASH_APP_BK2_ADDR + FLASH_APP_BK2_SIZE - APP_INF_OFFECT)
+
+#define FLASH_RESERVED1_ADDR    FLASH_SEC_ADDR_9
+#define FLASH_RESERVED1_SIZE    FLASH_SEC_SIZE_9
 
 #define FLASH_SECTION_INTERVAL  (0x20000)
 
@@ -57,9 +65,13 @@ typedef struct
 {
     uint32_t bl_hex_size;
     uint32_t bl_hex_checksum;
+}dh_bl_inf_t;
+
+typedef struct 
+{
     uint32_t app_hex_size;
     uint32_t app_hex_checksum;
-}dh_bl_inf_t;
+}dh_app_inf_t;
 #pragma pack()
 
 

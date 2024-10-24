@@ -10,6 +10,7 @@ extern "C" {
 
 #define FLASH_READ_SIZE 	(128)
 #define BOOT_RETRY_TIMES	(3)
+#define APPINF_NUMS	        (3)
 
 typedef enum{
     BOOT_APP_REPAIR,

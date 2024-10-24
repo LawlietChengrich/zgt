@@ -11,8 +11,11 @@ ADDRESS_BOOTLOADER = '08000000'
 ADDRESS_BOOTLOADER_INF = '08008000'
 ADDRESS_MAIN = '08020000'
 ADDRESS_BACKUP_0 = '08040000'
+ADDRESS_CHECKSUM_0 = '0805FC00'
 ADDRESS_BACKUP_1 = '08060000'
+ADDRESS_CHECKSUM_1 = '0807FC00'
 ADDRESS_BACKUP_2 = '08080000'
+ADDRESS_CHECKSUM_2 = '0809FC00'
 
 KEYWORD_MAIN = ':04000005'
 KEYWORD_END = ':00000001FF'
@@ -90,6 +93,7 @@ class Convertor:
 
 		try:
 			address_par = [ADDRESS_MAIN[0:4], ADDRESS_BACKUP_0[0:4], ADDRESS_BACKUP_1[0:4], ADDRESS_BACKUP_2[0:4]]
+			address_checksum_par = [ADDRESS_CHECKSUM_0, ADDRESS_CHECKSUM_1, ADDRESS_CHECKSUM_2]
 			app_data_array = []
 			for x in range(4):
 				fin = open(file_app, 'r')
@@ -132,7 +136,35 @@ class Convertor:
 					app_data_array.append(line)
 					self.hex_file_len += len(line)
 
-			self.app_flash_checksum = self.app_flash_checksum & 0xffffffff
+				if x > 0:
+					checksum_line = KEYWORD_ADDR + address_checksum_par[x-1][0:4]
+					line_checksum = 0
+
+					for i in range(int((len(checksum_line)-1)/2)):
+						line_checksum += int(checksum_line[POSITION_DATA_LEN+2*i:POSITION_DATA_LEN+2*(i+1)],16)
+
+					line_checksum = 0x100 - (line_checksum&0xff)
+					line_checksum &= 0xff
+
+					checksum_line = checksum_line  + '%02X'% line_checksum + '\n'
+					app_data_array.append(checksum_line)
+					
+					line_checksum = 0
+					checksum_line = ':%02x'%MAX_LINE_DATA_LEN + address_checksum_par[x-1][4:8] + CMD_DATA_REC + \
+										'%08X'% self.app_flash_src_len + '%08X'% self.app_flash_checksum + \
+										'FFFFFFFFFFFFFFFF'
+					for i in range(int((len(checksum_line)-1)/2)):
+						line_checksum += int(checksum_line[POSITION_DATA_LEN+2*i:POSITION_DATA_LEN+2*(i+1)],16)
+
+					line_checksum = 0x100 - (line_checksum&0xff)
+					line_checksum &= 0xff
+
+					checksum_line = checksum_line + '%02X'% line_checksum + '\n'
+					app_data_array.append(checksum_line)
+				else:
+					self.app_flash_checksum = self.app_flash_checksum & 0xffffffff
+					self.app_flash_src_len = self.endian_change(self.app_flash_src_len)
+					self.app_flash_checksum = self.endian_change(self.app_flash_checksum)
 
 		except:
 			print('Can not open the \"{}\" file!'.format(file_app))
@@ -154,13 +186,11 @@ class Convertor:
 
 		self.bootloader_flash_src_len = self.endian_change(self.bootloader_flash_src_len)
 		self.bootloader_flash_checksum = self.endian_change(self.bootloader_flash_checksum)
-		self.app_flash_src_len = self.endian_change(self.app_flash_src_len)
-		self.app_flash_checksum = self.endian_change(self.app_flash_checksum)
 
 		line_checksum = 0
 		line_checksum_str = ':%02x'%MAX_LINE_DATA_LEN + ADDRESS_BOOTLOADER_INF[4:8] + CMD_DATA_REC + \
 							'%08X'% self.bootloader_flash_src_len + '%08X'% self.bootloader_flash_checksum + \
-							'%08X'% self.app_flash_src_len + '%08X'% self.app_flash_checksum
+							'FFFFFFFFFFFFFFFF'
 		for i in range(int((len(line_checksum_str)-1)/2)):
 			line_checksum += int(line_checksum_str[POSITION_DATA_LEN+2*i:POSITION_DATA_LEN+2*(i+1)],16)
 
@@ -185,6 +215,10 @@ class Convertor:
 			fout.write(s)
 
 	def outputInfo(self):
+		self.bootloader_flash_src_len = self.endian_change(self.bootloader_flash_src_len)
+		self.bootloader_flash_checksum = self.endian_change(self.bootloader_flash_checksum)
+		self.app_flash_src_len = self.endian_change(self.app_flash_src_len)
+		self.app_flash_checksum = self.endian_change(self.app_flash_checksum)
 		print(' ')
 		print('=============================== hex_all make ===============================')
 		print(' ')
