@@ -60,6 +60,20 @@
 
 #define FLASH_APP_NUM           (4)
 
+#define FLASH_READ_SIZE 	    (128)
+#define FLASH_APPINF_NUMS       (3)
+
+#define DH_FALSE						(0)
+#define DH_TRUE							(1)
+
+
+typedef enum
+{
+    DH_FLASH_NO_ERR,
+    DH_FLASH_ERR_REPAIR,
+    DH_FLASH_ERR,
+}dh_flash_check_t;
+
 #pragma pack(1)
 typedef struct 
 {
@@ -77,6 +91,8 @@ typedef struct
 
 extern uint8_t dh_write_flash_data(uint32_t addr, uint8_t *buf, uint32_t nBytes);
 extern uint32_t dh_read_flash_data(uint32_t addr, uint8_t *buf, uint32_t nBytes);
+extern dh_flash_check_t dh_flash_check_app_inf(void);
+extern dh_flash_check_t dh_flash_check_app_data(void);
 
 #endif /* __INTERNAL_FLASH_H */
 
