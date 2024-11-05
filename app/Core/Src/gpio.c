@@ -72,7 +72,7 @@ void dh_gpio_1pluse(uint16_t ms, uint16_t gpio_num)
 #else
     LL_GPIO_SetOutputPin(dh_gpio_struct[gpio_num].group, dh_gpio_struct[gpio_num].pin);
 #endif
-    gpio_delay_us[gpio_num] = ms;
+    gpio_delay_us[gpio_num] = ms*(1000/SYSTICK_HANDLE_US);
   }
 }
 
