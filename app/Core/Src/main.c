@@ -101,7 +101,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
 	SysTick_Config(SystemCoreClock / (1000000/SYSTICK_HANDLE_US));//SysTick_Handler 10us 
-  DS18B20_Init();
+  //DS18B20_Init();
 #if defined (STM32_BUILD)
 	vector_table_relocate();
 #endif
@@ -119,7 +119,7 @@ int main(void)
     //LL_mDelay(500);
 	dh_gpio_main_process();
 	dh_can_data_send_process();
-		dh_ds18b20_process();
+		//dh_ds18b20_process();
 		running++;
 	//dh_timer_us_block_delay(5);
 	//HAL_GPIO_TogglePin(MPPT1_ON_GPIO_Port, MPPT1_ON_Pin);

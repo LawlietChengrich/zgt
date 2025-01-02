@@ -35,6 +35,9 @@
 	
 #define FLASH_BL_INF_ADDR	    FLASH_SEC_ADDR_2
 #define FLASH_BL_INF_SIZE	    FLASH_SEC_SIZE_2
+
+#define FLASH_ECC_INF_ADDR	    FLASH_SEC_ADDR_3
+#define FLASH_ECC_INF_SIZE	    FLASH_SEC_SIZE_3
 	
 #define FLASH_APP_MAIN_ADDR	    FLASH_SEC_ADDR_5
 #define FLASH_APP_MAIN_SIZE	    FLASH_SEC_SIZE_5
@@ -93,6 +96,9 @@ extern uint8_t dh_write_flash_data(uint32_t addr, uint8_t *buf, uint32_t nBytes)
 extern uint32_t dh_read_flash_data(uint32_t addr, uint8_t *buf, uint32_t nBytes);
 extern dh_flash_check_t dh_flash_check_app_inf(void);
 extern dh_flash_check_t dh_flash_check_app_data(void);
+
+extern uint8_t repair_the_appsection(uint8_t* app_status);
+extern dh_app_inf_t current_app_inf;
 
 #endif /* __INTERNAL_FLASH_H */
 

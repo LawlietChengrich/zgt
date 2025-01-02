@@ -3,7 +3,7 @@
 #include "string.h"
 
 dh_app_inf_t current_app_inf = {0};
-uint8_t flashdata[FLASH_READ_SIZE] = {0};
+static uint8_t flashdata[FLASH_READ_SIZE] = {0};
 
 uint32_t FLASH_GetSectorSize(uint32_t address)
 {
