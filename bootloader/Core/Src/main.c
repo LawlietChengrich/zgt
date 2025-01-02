@@ -239,7 +239,6 @@ int main(void)
 		//ecc test ， only test FLASH_APP_BK0_ADDR zone，and repair
 		//dh_write_flash_data(FLASH_ECC_INF_ADDR, adsdasda, sizeof(adsdasda));
 		dh_ecc_repair_process();
-		dh_bootup_process_retry();
 	}
 #else
 	dh_bootup_process_retry();

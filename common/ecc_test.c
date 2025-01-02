@@ -4,6 +4,7 @@
 #include "flash.h"
 #include "stdlib.h"
 #include "string.h"
+#include "boot.h"
 
 int nand_calculate_ecc(uint8_t *dat, uint8_t *ecc_code);
 
@@ -240,5 +241,6 @@ void dh_ecc_repair_process(void)
     if(DH_FLASH_NO_ERR == ecc_correct_process())
     {
         repair_the_appsection(app_status);
+        dh_bootup_process_retry();
     }
 }
